@@ -4,6 +4,7 @@ import shopify from 'vite-plugin-shopify';
 import pageReload from 'vite-plugin-page-reload';
 import importMaps from 'vite-plugin-shopify-import-maps';
 import { shopifyLit } from './shopify-lit/vite/index.ts';
+import { tailwindContentReload } from './frontend/lib/tailwind-content-reload.ts';
 import { existsSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
@@ -100,23 +101,25 @@ export default defineConfig(({ command }) => ({
     ],
   },
   plugins: [
+    // Before Tailwind so snippet writes are on disk when CSS rescans
     shopifyLit({
       componentsDir: 'frontend/components',
       outputDir: 'snippets',
       modulePrefix: '@components',
     }),
+    tailwindcss(),
+    tailwindContentReload({
+      cssEntry: 'frontend/entrypoints/theme.css',
+      watch: ['frontend/components', 'snippets', 'frontend/entrypoints'],
+    }),
     shopify({
       tunnel: true,
       snippetFile: 'vite.liquid',
-      additionalEntrypoints: [
-        'frontend/components/product-card.ts',
-        'frontend/components/qty-stepper.ts',
-      ],
+      additionalEntrypoints: ['frontend/components/**/*.{js,ts}'],
     }),
     pageReload('/tmp/theme.update', {
-      delay: 2000,
+      delay: 500,
     }),
     ...(command === 'build' ? [importMaps({ bareModules: true })] : []),
-    tailwindcss(),
   ],
 }));

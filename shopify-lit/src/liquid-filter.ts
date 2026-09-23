@@ -1,7 +1,8 @@
 /**
  * Compile-time helpers mapped 1:1 to Liquid filters.
- * Runtime returns the raw value (Liquid already applied formatting in SSR;
- * client JSON usually carries pre-formatted strings).
+ *
+ * SSR: the Vite compiler rewrites to `{{ value | filter }}`.
+ * Client: returns a usable value from props JSON (e.g. image drops → `.src`).
  */
 export type LiquidFilterName =
   | 'money'
@@ -13,6 +14,11 @@ export type LiquidFilterName =
   | `image_url: width: ${number}`
   | (string & {});
 
-export function liquidFilter<T>(value: T, _filter: LiquidFilterName): T {
+export function liquidFilter<T>(value: T, filter: LiquidFilterName): T {
+  if (typeof filter === 'string' && filter.startsWith('image_url')) {
+    if (value && typeof value === 'object' && 'src' in (value as object)) {
+      return (value as unknown as { src: T }).src;
+    }
+  }
   return value;
 }

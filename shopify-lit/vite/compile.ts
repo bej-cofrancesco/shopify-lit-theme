@@ -294,8 +294,17 @@ function transformExpression(
     return '';
   }
 
+  // lit directives — client-only (absorb / firstUpdated wire refs)
+  if (ts.isCallExpression(expr) && getCallName(expr) === 'ref') {
+    return '';
+  }
+
   if (ts.isCallExpression(expr) && getCallName(expr) === 'liquidFilter') {
     return transformLiquidFilter(expr, liquidContext, errors);
+  }
+
+  if (ts.isCallExpression(expr) && getCallName(expr) === 'liquidHTML') {
+    return transformLiquidHTML(expr, liquidContext, errors);
   }
 
   if (ts.isCallExpression(expr) && getCallName(expr) === 'clientOnlyBlock') {
@@ -311,6 +320,11 @@ function transformExpression(
     return transformNest(expr, errors);
   }
 
+  // each(collection, (item) => html`...`) → {% for item in collection %}
+  if (ts.isCallExpression(expr) && getCallName(expr) === 'each') {
+    return transformEach(expr, sourceText, liquidContext, errors);
+  }
+
   if (ts.isCallExpression(expr) && ts.isPropertyAccessExpression(expr.expression)) {
     if (expr.expression.name.text === 'map') {
       return transformMap(expr, sourceText, liquidContext, errors);
@@ -318,11 +332,15 @@ function transformExpression(
   }
 
   if (ts.isConditionalExpression(expr)) {
-    // Client state string swap: `this.added ? 'Added' : 'Add to cart'` → SSR initial branch
+    // Props truthiness + string branches → real Liquid {% if %}
     if (
       (ts.isStringLiteral(expr.whenTrue) || ts.isNoSubstitutionTemplateLiteral(expr.whenTrue)) &&
       (ts.isStringLiteral(expr.whenFalse) || ts.isNoSubstitutionTemplateLiteral(expr.whenFalse))
     ) {
+      if (propsPath(expr.condition, liquidContext)) {
+        return transformConditional(expr, sourceText, liquidContext, errors);
+      }
+      // Client state (e.g. this.added) — SSR the initial / false branch
       const initial = ts.isStringLiteral(expr.whenFalse)
         ? expr.whenFalse.text
         : expr.whenFalse.text;
@@ -338,7 +356,7 @@ function transformExpression(
 
   errors.push(
     `Unsupported expression in render(): ${sourceText.slice(expr.getStart(), expr.getEnd())}. ` +
-      `Use this.props.*, liquidFilter(), map→html, ternary, or nest().`,
+      `Use this.props.*, liquidFilter(), each(), map→html, ternary, or nest().`,
   );
   return `<!-- unsupported: ${escapeHtmlComment(sourceText.slice(expr.getStart(), expr.getEnd()))} -->`;
 }
@@ -430,6 +448,25 @@ function transformLiquidFilter(
   return `{{ ${path} | ${filter} }}`;
 }
 
+/** liquidHTML(this.props.html) → {{ html }} (raw, intentional). */
+function transformLiquidHTML(
+  call: ts.CallExpression,
+  liquidContext: Record<string, string>,
+  errors: string[],
+): string {
+  const valueExpr = call.arguments[0];
+  if (!valueExpr) {
+    errors.push('liquidHTML(value) requires a value');
+    return '';
+  }
+  const path = propsPath(valueExpr, liquidContext);
+  if (!path) {
+    errors.push('liquidHTML arg must be this.props.* path');
+    return '';
+  }
+  return `{{ ${path} }}`;
+}
+
 const ALLOWED_FILTER_PREFIXES = [
   'money',
   'escape',
@@ -478,6 +515,85 @@ function transformClientOnly(
   return '';
 }
 
+function transformEach(
+  call: ts.CallExpression,
+  sourceText: string,
+  liquidContext: Record<string, string>,
+  errors: string[],
+): string {
+  // each(collection, (item) => html`...`)
+  // each(collection.slice(0, 2), (item) => html`...`)
+  const collectionArg = call.arguments[0];
+  const fn = call.arguments[1];
+  if (!collectionArg || !fn || !ts.isArrowFunction(fn)) {
+    errors.push('each(collection, (item) => html`...`) requires a collection and arrow callback');
+    return '';
+  }
+
+  let collectionExpr: ts.Expression = collectionArg;
+  let limitClause = '';
+
+  if (
+    ts.isCallExpression(collectionExpr) &&
+    ts.isPropertyAccessExpression(collectionExpr.expression) &&
+    collectionExpr.expression.name.text === 'slice'
+  ) {
+    const sliceAccess = collectionExpr.expression;
+    const startArg = collectionExpr.arguments[0];
+    const endArg = collectionExpr.arguments[1];
+    if (
+      startArg &&
+      ts.isNumericLiteral(startArg) &&
+      startArg.text === '0' &&
+      endArg &&
+      ts.isNumericLiteral(endArg)
+    ) {
+      limitClause = ` limit: ${endArg.text}`;
+      collectionExpr = sliceAccess.expression;
+    } else {
+      errors.push('each() slice() only supports .slice(0, N)');
+      return '';
+    }
+  }
+
+  const collectionPath = propsPath(collectionExpr, liquidContext);
+  if (!collectionPath) {
+    errors.push('each() collection must be this.props.*');
+    return '';
+  }
+
+  let itemName = 'item';
+  if (fn.parameters[0] && ts.isIdentifier(fn.parameters[0].name)) {
+    itemName = fn.parameters[0].name.text;
+  }
+
+  let bodyTemplate: ts.TaggedTemplateExpression | null = null;
+  if (ts.isTaggedTemplateExpression(fn.body) && isHtmlTag(fn.body.tag)) {
+    bodyTemplate = fn.body;
+  } else if (ts.isBlock(fn.body)) {
+    bodyTemplate = findHtmlTaggedTemplate(fn.body);
+  }
+
+  if (!bodyTemplate) {
+    errors.push('each() callback must return html`...`');
+    return '';
+  }
+
+  const inner = transformHtmlTemplateInLoop(
+    bodyTemplate,
+    sourceText,
+    liquidContext,
+    itemName,
+    errors,
+  );
+
+  if (limitClause) {
+    return `{% for ${itemName} in ${collectionPath}${limitClause} %}${inner}{% endfor %}`;
+  }
+
+  return `{% for ${itemName} in ${collectionPath} %}${inner}{% endfor %}`;
+}
+
 function transformMap(
   call: ts.CallExpression,
   sourceText: string,
@@ -485,10 +601,38 @@ function transformMap(
   errors: string[],
 ): string {
   // this.props.items.map((item) => html`...`)
+  // this.props.items.slice(0, 2).map((item) => html`...`)
   const callee = call.expression;
   if (!ts.isPropertyAccessExpression(callee)) return '';
 
-  const collectionPath = propsPath(callee.expression, liquidContext);
+  let collectionExpr: ts.Expression = callee.expression;
+  let limitClause = '';
+
+  // Optional .slice(0, N) before .map → Liquid `limit: N`
+  if (
+    ts.isCallExpression(collectionExpr) &&
+    ts.isPropertyAccessExpression(collectionExpr.expression) &&
+    collectionExpr.expression.name.text === 'slice'
+  ) {
+    const sliceAccess = collectionExpr.expression;
+    const startArg = collectionExpr.arguments[0];
+    const endArg = collectionExpr.arguments[1];
+    if (
+      startArg &&
+      ts.isNumericLiteral(startArg) &&
+      startArg.text === '0' &&
+      endArg &&
+      ts.isNumericLiteral(endArg)
+    ) {
+      limitClause = ` limit: ${endArg.text}`;
+      collectionExpr = sliceAccess.expression;
+    } else {
+      errors.push('map slice() only supports .slice(0, N)');
+      return '';
+    }
+  }
+
+  const collectionPath = propsPath(collectionExpr, liquidContext);
   if (!collectionPath) {
     errors.push('map() must be called on this.props.* array');
     return '';
@@ -517,7 +661,6 @@ function transformMap(
     return '';
   }
 
-  // Inside the loop, map this.props.X stays as props; item.foo → item.foo
   const inner = transformHtmlTemplateInLoop(
     bodyTemplate,
     sourceText,
@@ -526,7 +669,11 @@ function transformMap(
     errors,
   );
 
-  return `{% for ${itemName} in ${collectionPath} limit: limit %}${inner}{% endfor %}`;
+  if (limitClause) {
+    return `{% for ${itemName} in ${collectionPath}${limitClause} %}${inner}{% endfor %}`;
+  }
+
+  return `{% for ${itemName} in ${collectionPath} %}${inner}{% endfor %}`;
 }
 
 function transformHtmlTemplateInLoop(
@@ -544,13 +691,46 @@ function transformHtmlTemplateInLoop(
 
   let out = template.head.text;
   for (const span of template.templateSpans) {
-    out += transformLoopExpression(
+    const eventMatch = out.match(/@([\w-]+)\s*=\s*$/);
+    if (eventMatch) {
+      const eventName = eventMatch[1];
+      const method = methodNameFromHandler(span.expression);
+      out = out.replace(/@([\w-]+)\s*=\s*$/, '');
+      if (method) {
+        out += `data-lit-on-${eventName}="${method}"`;
+      }
+      out += span.literal.text;
+      continue;
+    }
+
+    if (/\.[\w]+\s*=\s*$/.test(out)) {
+      out = out.replace(/\.[\w]+\s*=\s*$/, '');
+      out += span.literal.text;
+      continue;
+    }
+
+    if (/\?[\w-]+\s*=\s*$/.test(out)) {
+      out = out.replace(/\?[\w-]+\s*=\s*$/, '');
+      out += span.literal.text;
+      continue;
+    }
+
+    const attrMatch = out.match(/([\w-:]+)\s*=\s*$/);
+    let exprOut = transformLoopExpression(
       span.expression,
       sourceText,
       liquidContext,
       itemName,
       errors,
     );
+    if (attrMatch && exprOut && !exprOut.startsWith(' ') && !exprOut.startsWith('data-')) {
+      if (exprOut.startsWith('{{') && exprOut.endsWith('}}')) {
+        exprOut = `"${exprOut}"`;
+      } else if (!exprOut.startsWith('"') && !exprOut.startsWith("'")) {
+        exprOut = `"${exprOut}"`;
+      }
+    }
+    out += exprOut;
     out += span.literal.text;
   }
   return out;
@@ -565,6 +745,21 @@ function transformLoopExpression(
 ): string {
   if (ts.isCallExpression(expr) && getCallName(expr) === 'liquidFilter') {
     return transformLiquidFilterInLoop(expr, liquidContext, itemName, errors);
+  }
+
+  if (ts.isCallExpression(expr) && getCallName(expr) === 'liquidHTML') {
+    const valueExpr = expr.arguments[0];
+    if (!valueExpr) {
+      errors.push('liquidHTML(value) requires a value');
+      return '';
+    }
+    const itemPath = identifierPath(valueExpr, itemName);
+    const path = itemPath ?? propsPath(valueExpr, liquidContext);
+    if (!path) {
+      errors.push('liquidHTML value must be item.* or this.props.*');
+      return '';
+    }
+    return `{{ ${path} }}`;
   }
 
   if (ts.isCallExpression(expr) && getCallName(expr) === 'nest') {
@@ -638,8 +833,24 @@ function branchToLiquid(
   errors: string[],
 ): string {
   if (ts.isIdentifier(expr) && expr.text === 'nothing') return '';
+  if (ts.isStringLiteral(expr) || ts.isNoSubstitutionTemplateLiteral(expr)) {
+    return expr.text;
+  }
   const tmpl = asHtmlTemplate(expr);
   if (tmpl) return transformHtmlTemplate(tmpl, sourceText, liquidContext, errors);
+  // Reuse top-level expression transform (liquidHTML, each, nest, …)
+  if (
+    ts.isCallExpression(expr) &&
+    (getCallName(expr) === 'liquidHTML' ||
+      getCallName(expr) === 'each' ||
+      getCallName(expr) === 'nest' ||
+      getCallName(expr) === 'liquidFilter' ||
+      getCallName(expr) === 'ref' ||
+      getCallName(expr) === 'clientOnly' ||
+      getCallName(expr) === 'clientOnlyBlock')
+  ) {
+    return transformExpression(expr, sourceText, liquidContext, errors);
+  }
   const path = propsPath(expr, liquidContext);
   if (path) return `{{ ${path} }}`;
   errors.push(`Unsupported ternary branch: ${sourceText.slice(expr.getStart(), expr.getEnd())}`);
@@ -743,41 +954,16 @@ function escapeHtmlComment(s: string): string {
 }
 
 /**
- * Build props capture + attribute for the host element.
+ * Build props capture from `liquidContext` only — every prop is listed by the
+ * component. Values may include Liquid filters (e.g. `product.price | money`).
  */
 function emitPropsCapture(result: CompileResult): {
   preamble: string;
   attributeValue: string;
 } {
-  if (result.propsSource === 'product') {
-    return {
-      preamble: `{% liquid
-  assign image = product.featured_image
-  assign image_alt = image.alt | default: product.title
-  assign image_url = ''
-  if image != blank
-    assign image_url = image | image_url: width: 800
-  endif
-%}
-{% capture props %}
-  {
-    "url": {{ product.url | json }},
-    "title": {{ product.title | json }},
-    "vendor": {{ product.vendor | default: '' | json }},
-    "price": {{ product.price | money | json }},
-    "image_url": {{ image_url | json }},
-    "image_alt": {{ image_alt | json }}
-  }
-{% endcapture %}
-`,
-      attributeValue: `{{ props | escape }}`,
-    };
-  }
-
   if (result.liquidContext && Object.keys(result.liquidContext).length > 0) {
     const parts: string[] = [];
     for (const [propKey, liquidVar] of Object.entries(result.liquidContext)) {
-      // numbers for qty stepper etc. — use json for safety
       parts.push(`"${propKey}": {{ ${liquidVar} | json }}`);
     }
     return {
@@ -834,6 +1020,29 @@ export function emitLiquidSnippet(
   }
 
   const hostInner = result.liquidInnerHtml;
+  const hostOpen = `<${result.tag} data-lit-ssr props="${attributeValue}">`;
+  const hostClose = `</${result.tag}>`;
+  const hostBlock = `${hostOpen}
+${hostInner}
+${hostClose}`;
+
+  const loaderBlock = `{% capture island_html %}
+${hostBlock}
+{% endcapture %}
+{% render 'vulpine-loader',
+  entry: '${viteEntry}',
+  on: on,
+  replay: replay,
+  html: island_html
+%}`;
+
+  // Nested islands (nest() / parent already loads the module): bare host, no loader.
+  const withSkip = `{% if skip_script %}
+${hostBlock}
+{% else %}
+${loaderBlock}
+{% endif %}
+`;
 
   const content = `{% comment %}
   AUTO-GENERATED from ${path.basename(result.sourceFile)} by shopify-lit
@@ -842,31 +1051,9 @@ export function emitLiquidSnippet(
 ${limitPreamble}${onDefault}${qtyDefaults}${
     result.propsSource === 'product'
       ? `{% if product != blank %}
-${preamble}{% capture html %}
-<${result.tag} data-lit-ssr props="${attributeValue}">
-${hostInner}
-</${result.tag}>
-{% endcapture %}
-{% render 'vulpine-loader',
-  entry: '${viteEntry}',
-  on: on,
-  replay: replay,
-  html: html
-%}
-{% endif %}
+${preamble}${withSkip}{% endif %}
 `
-      : `${preamble}{% capture html %}
-<${result.tag} data-lit-ssr props="${attributeValue}">
-${hostInner}
-</${result.tag}>
-{% endcapture %}
-{% render 'vulpine-loader',
-  entry: '${viteEntry}',
-  on: on,
-  replay: replay,
-  html: html
-%}
-`
+      : `${preamble}${withSkip}`
   }`;
 
   return { filename, content };

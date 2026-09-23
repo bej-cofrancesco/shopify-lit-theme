@@ -1,0 +1,226 @@
+{% comment %}
+  AUTO-GENERATED from search-drawer.ts by shopify-lit
+  Do not edit by hand.
+{% endcomment %}
+{% assign on = on | default: 'visible' %}
+{% capture props %}
+  {
+    "searchUrl": {{ search_url | json }},
+    "trendingHtml": {{ trending_html | json }},
+    "asideHtml": {{ aside_html | json }},
+    "hasAsideStatic": {{ has_aside_static | json }},
+    "title": {{ title | json }},
+    "position": {{ position | json }},
+    "drawerHeightClass": {{ drawer_height_class | json }},
+    "class": {{ class | json }},
+    "openEvent": {{ open_event | json }},
+    "closeEvent": {{ close_event | json }}
+  }
+{% endcapture %}
+{% if skip_script %}
+<search-drawer data-lit-ssr props="{{ props | escape }}">
+<div
+              role="dialog"
+              aria-modal="true"
+              tabindex="-1"
+              inert
+              class="left-0 right-0 -top-[150%] z-50 h-[100dvh] max-h-[100dvh] w-full fixed bg-white text-black outline-none"
+            >
+              <div class="flex h-full w-full flex-col">
+                <div
+                  class="flex shrink-0 items-center gap-2 px-4 py-3 md:gap-4 md:px-8 md:py-4"
+                >
+                  <form
+                    action="{{ search_url }}"
+                    class="flex grow items-center gap-2.5 border border-gray-200 bg-gray-50 px-3 py-2.5 md:px-4"
+                  >
+                    <button
+                      type="submit"
+                      aria-label="Search"
+                      class="flex h-5 w-5 shrink-0 items-center justify-center text-gray-500"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        class="h-full w-full"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="m21 21-4.35-4.35M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z"
+                        />
+                      </svg>
+                    </button>
+                    <label class="sr-only" for="search-drawer-input"
+                      >Search products</label
+                    >
+                    <input
+                      id="search-drawer-input"
+                      type="text"
+                      name="q"
+                      class="h-6 w-full grow appearance-none bg-transparent text-[16px] font-medium leading-none outline-none placeholder:font-normal placeholder:text-gray-400"
+                      placeholder="Search for products or collections"
+                      autocomplete="off"
+                    />
+                  </form>
+                  <div
+                    class="flex h-10 w-10 shrink-0 items-center justify-center"
+                  >
+                    <button
+                      type="button"
+                      class="relative flex items-center justify-center"
+                      aria-label="{{ title }}"
+                      tabindex="-1"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        class="h-5 w-5"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                          d="M6 6l12 12M18 6 6 18"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div
+                  class="min-h-0 w-full flex-1 overflow-y-auto overscroll-contain border-t border-gray-100 px-4 py-5 md:px-8 md:py-6"
+                >
+                  <div
+                    class="flex flex-col gap-7 md:grid md:grid-cols-[minmax(0,1fr)_240px] md:items-start md:gap-10"
+                  >
+                    {% if trending_html %}<div
+                            class="{% if has_aside_static %}block{% else %}block md:col-span-2{% endif %}"
+                            data-search-trending-carousel
+                          >
+                            {{ trending_html }}
+                          </div>{% endif %}
+                    {% if has_aside_static %}<div
+                            class="{% if trending_html %}border-t border-gray-100 pt-6 {% endif %}flex flex-col gap-6 md:border-t-0 md:pt-0"
+                            data-search-aside
+                          >
+                            {{ aside_html }}
+                          </div>{% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+</search-drawer>
+{% else %}
+{% capture island_html %}
+<search-drawer data-lit-ssr props="{{ props | escape }}">
+<div
+              role="dialog"
+              aria-modal="true"
+              tabindex="-1"
+              inert
+              class="left-0 right-0 -top-[150%] z-50 h-[100dvh] max-h-[100dvh] w-full fixed bg-white text-black outline-none"
+            >
+              <div class="flex h-full w-full flex-col">
+                <div
+                  class="flex shrink-0 items-center gap-2 px-4 py-3 md:gap-4 md:px-8 md:py-4"
+                >
+                  <form
+                    action="{{ search_url }}"
+                    class="flex grow items-center gap-2.5 border border-gray-200 bg-gray-50 px-3 py-2.5 md:px-4"
+                  >
+                    <button
+                      type="submit"
+                      aria-label="Search"
+                      class="flex h-5 w-5 shrink-0 items-center justify-center text-gray-500"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        class="h-full w-full"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="m21 21-4.35-4.35M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z"
+                        />
+                      </svg>
+                    </button>
+                    <label class="sr-only" for="search-drawer-input"
+                      >Search products</label
+                    >
+                    <input
+                      id="search-drawer-input"
+                      type="text"
+                      name="q"
+                      class="h-6 w-full grow appearance-none bg-transparent text-[16px] font-medium leading-none outline-none placeholder:font-normal placeholder:text-gray-400"
+                      placeholder="Search for products or collections"
+                      autocomplete="off"
+                    />
+                  </form>
+                  <div
+                    class="flex h-10 w-10 shrink-0 items-center justify-center"
+                  >
+                    <button
+                      type="button"
+                      class="relative flex items-center justify-center"
+                      aria-label="{{ title }}"
+                      tabindex="-1"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        class="h-5 w-5"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                          d="M6 6l12 12M18 6 6 18"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div
+                  class="min-h-0 w-full flex-1 overflow-y-auto overscroll-contain border-t border-gray-100 px-4 py-5 md:px-8 md:py-6"
+                >
+                  <div
+                    class="flex flex-col gap-7 md:grid md:grid-cols-[minmax(0,1fr)_240px] md:items-start md:gap-10"
+                  >
+                    {% if trending_html %}<div
+                            class="{% if has_aside_static %}block{% else %}block md:col-span-2{% endif %}"
+                            data-search-trending-carousel
+                          >
+                            {{ trending_html }}
+                          </div>{% endif %}
+                    {% if has_aside_static %}<div
+                            class="{% if trending_html %}border-t border-gray-100 pt-6 {% endif %}flex flex-col gap-6 md:border-t-0 md:pt-0"
+                            data-search-aside
+                          >
+                            {{ aside_html }}
+                          </div>{% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+</search-drawer>
+{% endcapture %}
+{% render 'vulpine-loader',
+  entry: '@components/search-drawer.ts',
+  on: on,
+  replay: replay,
+  html: island_html
+%}
+{% endif %}

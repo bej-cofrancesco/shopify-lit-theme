@@ -16,5 +16,28 @@
         "label": "Favicon"
       }
     ]
+  },
+  {
+    "name": "Search",
+    "settings": [
+      {
+        "type": "collection",
+        "id": "search_collection",
+        "label": "Trending products collection",
+        "info": "Shown in the search drawer idle state. Falls back to All products."
+      },
+      {
+        "type": "textarea",
+        "id": "search_trending_terms",
+        "label": "Trending search terms",
+        "info": "One term per line."
+      },
+      {
+        "type": "collection_list",
+        "id": "search_preset_collections",
+        "label": "Preset collections",
+        "limit": 8
+      }
+    ]
   }
 ]

@@ -35,7 +35,6 @@ export function shopifyLit(userOptions: ShopifyLitPluginOptions = {}): Plugin {
       if (!/\.(tsx?|jsx?)$/.test(filePath)) continue;
       // Skip Vite entry wrappers and non-component files
       if (filePath.endsWith('.entry.ts') || filePath.endsWith('.entry.js')) continue;
-      if (path.basename(filePath).startsWith('boilerplate')) continue;
 
       const source = fs.readFileSync(filePath, 'utf8');
       const compiled = compileComponentFile(filePath, source, {
@@ -59,6 +58,17 @@ export function shopifyLit(userOptions: ShopifyLitPluginOptions = {}): Plugin {
       if (prev !== content) {
         fs.writeFileSync(outPath, content, 'utf8');
         console.log(`[shopify-lit] wrote ${path.relative(root, outPath)}`);
+        // Let Tailwind / browser pick up new classes in the snippet
+        if (server) {
+          const cssFile = path.resolve(root, 'frontend/entrypoints/theme.css');
+          const modules = server.moduleGraph.getModulesByFile(cssFile);
+          if (modules) {
+            for (const mod of modules) {
+              server.moduleGraph.invalidateModule(mod);
+            }
+          }
+          server.ws.send({ type: 'full-reload', path: outPath });
+        }
       }
     }
   };

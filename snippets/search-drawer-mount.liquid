@@ -1,0 +1,148 @@
+{%- comment -%}
+  Prepares search-drawer Liquid props, then renders the auto-generated island.
+  Theme data lives here; chrome/SSR markup comes from search-drawer.ts compile.
+{%- endcomment -%}
+
+{%- liquid
+  assign search_collection = settings.search_collection
+  if search_collection == blank
+    assign search_collection = collections.all
+  endif
+
+  assign trending_with_media = search_collection.products | where: 'featured_media'
+  assign trending_available = trending_with_media | where: 'available', true
+  assign trending_sold_out = trending_with_media | where: 'available', false
+  assign trending_products = trending_available | concat: trending_sold_out
+
+  if trending_products.size == 0 and search_collection != blank
+    assign trending_products = search_collection.products
+  endif
+
+  assign trending_terms = settings.search_trending_terms | strip | newline_to_br | strip_newlines | split: '<br />'
+  assign preset_collections = settings.search_preset_collections
+
+  assign heading_classes = 'text-3xs leading-sm tracking-2 font-bold uppercase text-gray-400'
+  assign row_classes = 'group -mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-2 px-2 py-1.5 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-black'
+  assign item_classes = 'w-[calc((100%+1rem)/3.35-4px)] shrink-0 snap-start md:w-[calc(100%/3.35-4px)]'
+
+  assign has_trending_terms = false
+  for term in trending_terms
+    assign trimmed = term | strip
+    if trimmed != blank
+      assign has_trending_terms = true
+      break
+    endif
+  endfor
+
+  assign has_collections = false
+  if preset_collections.size > 0
+    assign has_collections = true
+  endif
+
+  assign has_trending_products = false
+  if trending_products.size > 0
+    assign has_trending_products = true
+  endif
+
+  assign has_aside_static = false
+  if has_trending_terms or has_collections
+    assign has_aside_static = true
+  endif
+-%}
+
+{%- capture carousel_track -%}
+  {%- for product in trending_products limit: 10 -%}
+    <li class="{{ item_classes }}">
+      {% render 'product-card', product: product, size: 'sm', skip_script: true %}
+    </li>
+  {%- endfor -%}
+{%- endcapture -%}
+
+{%- capture trending_html -%}
+  {%- if has_trending_products -%}
+    {% render 'carousel-arrows',
+      title: 'Trending now',
+      html: carousel_track,
+      skip_script: true
+    %}
+  {%- endif -%}
+{%- endcapture -%}
+
+{%- capture aside_html -%}
+  {%- if has_trending_terms -%}
+    <div class="flex flex-col gap-2">
+      <h3 class="{{ heading_classes }}">Trending searches</h3>
+      <ul class="flex flex-col">
+        {%- for term in trending_terms -%}
+          {%- assign trimmed = term | strip -%}
+          {%- if trimmed != blank -%}
+            <li>
+              <button
+                type="button"
+                class="{{ row_classes }}"
+                data-search-apply="{{ trimmed | escape }}"
+              >
+                <span>{{ trimmed }}</span>
+                <span
+                  class="text-gray-400 transition-transform group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                  >&rsaquo;</span
+                >
+              </button>
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    </div>
+  {%- endif -%}
+
+  {%- if has_collections -%}
+    <div class="flex flex-col gap-2">
+      <h3 class="{{ heading_classes }}">Collections</h3>
+      <ul class="flex flex-col gap-1">
+        {%- for preset_collection in preset_collections -%}
+          <li>
+            <a
+              href="{{ preset_collection.url }}"
+              data-search-term="{{ preset_collection.title | escape }}"
+              class="group -mx-2 flex items-center gap-3 px-2 py-1.5 transition-colors hover:bg-gray-50"
+            >
+              <span class="block h-11 w-11 shrink-0 overflow-hidden bg-gray-100">
+                {%- if preset_collection.featured_image -%}
+                  {{
+                    preset_collection.featured_image
+                    | image_url: width: 176
+                    | image_tag:
+                      widths: '88, 176',
+                      sizes: '44px',
+                      width: 44,
+                      height: 44,
+                      loading: 'lazy',
+                      decoding: 'async',
+                      alt: preset_collection.title,
+                      class: 'h-full w-full object-cover'
+                  }}
+                {%- endif -%}
+              </span>
+              <span class="truncate text-sm font-medium">{{ preset_collection.title }}</span>
+            </a>
+          </li>
+        {%- endfor -%}
+      </ul>
+    </div>
+  {%- endif -%}
+{%- endcapture -%}
+
+{% render 'search-drawer',
+  search_url: routes.search_url,
+  trending_html: trending_html,
+  aside_html: aside_html,
+  has_aside_static: has_aside_static,
+  title: 'Search',
+  position: 'top',
+  drawer_height_class: 'h-[100dvh] max-h-[100dvh] w-full',
+  class: 'left-0 right-0',
+  open_event: 'search:open',
+  close_event: 'search:close',
+  on: 'event:search:open idle'
+%}

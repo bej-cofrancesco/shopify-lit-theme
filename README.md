@@ -25,9 +25,12 @@ Light DOM + global `theme.css` (Tailwind `@source` covers component files).
 ## New component
 
 1. `frontend/components/my-widget.ts` — extend `ShopifyLitElement`, decorate with `@shopifyComponent`
-2. Use `this.props.*`, `liquidFilter()`, `.map` → for, ternary, `@click=${this.method}`, `nest()`
-3. Save — plugin writes `snippets/my-widget.liquid`
-4. `{% render 'my-widget', … %}`
+2. Use `this.props.*`, `liquidFilter()`, `each()` / `.map` → for, ternary, `@click=${this.onX}`, `nest()`, `liquidHTML()`
+3. Client-only UI (open state, fetch results, localStorage): wrap in `clientOnly({ skeleton: html`…` }, live)` — Liquid emits the skeleton; the client runs the live branch
+4. Save — plugin writes `snippets/my-widget.liquid`
+5. `{% render 'my-widget', … %}`
+
+`@shopifyComponent` always means auto-generated Liquid. Theme data prep (collections, settings) belongs in the caller / a thin mount snippet.
 
 ## Package
 

@@ -1,11 +1,20 @@
 {% doc %}
   Defers loading a Vite entry until a trigger fires. Host markup paints immediately.
 
-  For on: interaction, the click/key that triggered load is replayed after hydrate
-  so drawers/modals/buttons still perform their action (opt out with replay: false).
+  `on` accepts one or more triggers (space / comma / + separated). All are armed;
+  the first to fire wins.
+
+  Triggers:
+  - visible | idle | interaction
+  - event:<name> — load when that event fires on window (e.g. event:search:open).
+    After hydrate, the **exact same event** (type + detail) is re-dispatched.
+  - media:<query> — gate; other triggers only arm while matchMedia matches
+    (e.g. media:(max-width: 767px) event:search:open)
+
+  Example: `on: 'idle visible'` or `on: 'event:search:open idle'`
 
   @param {string} entry - Vite entry path, e.g. '@components/qty-stepper.ts'
-  @param {string} [on] - visible | idle | interaction (default: visible)
+  @param {string} [on] - trigger list (default: visible)
   @param {boolean} [replay] - Replay the triggering event after load (default true)
   @param {string} html - Host markup to wrap (usually captured CE + DSD)
 {% enddoc %}

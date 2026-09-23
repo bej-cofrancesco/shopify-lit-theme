@@ -2,6 +2,7 @@
 @import 'tailwindcss-safe-area';
 
 @source '../**/*.{js,ts,liquid}';
+@source '../components/**/*.{js,ts}';
 @source '../../snippets/**/*.liquid';
 @source '../../sections/**/*.liquid';
 
@@ -12,8 +13,17 @@
 
   /* Transparent hosts — layout lives in inner DSD / Lit markup */
   vulpine-loader,
+  event-trigger,
   qty-stepper,
   product-card {
     display: contents;
+  }
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
   }
 }

@@ -2,6 +2,10 @@
   <header class="space-y-3">
     <h1 class="text-3xl font-semibold tracking-tight">{{ 'dsd.title' | t }}</h1>
     <p class="max-w-2xl text-stone-600">{{ 'dsd.intro' | t }}</p>
+    <p class="text-sm text-stone-500">
+      Use the search icon in the header — the drawer loads on
+      <code class="text-xs">search:open</code> (or idle).
+    </p>
   </header>
 
   <div class="space-y-3">
@@ -27,25 +31,13 @@
     {% endif %}
   </div>
 
-  <div class="space-y-3">
-    <h2 class="text-xl font-medium">{{ 'dsd.interaction_heading' | t }}</h2>
-    <p class="text-sm text-stone-500">{{ 'dsd.interaction_hint' | t }}</p>
-    {% render 'qty-stepper', value: 3, min: 1, max: 9, on: 'interaction' %}
-  </div>
-
-  <div class="space-y-3">
-    <h2 class="text-xl font-medium">{{ 'dsd.idle_heading' | t }}</h2>
-    <p class="text-sm text-stone-500">{{ 'dsd.idle_hint' | t }}</p>
-    {% render 'qty-stepper', value: 1, min: 1, max: 9, on: 'idle' %}
-  </div>
-
   <p class="text-sm font-medium text-stone-500">{{ 'dsd.scroll_spacer' | t }}</p>
   <div class="h-[70vh] rounded-xl border border-dashed border-stone-300 bg-stone-50" aria-hidden="true"></div>
 
   <div class="space-y-3">
     <h2 class="text-xl font-medium">{{ 'dsd.visible_heading' | t }}</h2>
     <p class="text-sm text-stone-500">{{ 'dsd.visible_hint' | t }}</p>
-    {% render 'qty-stepper', value: 5, min: 1, max: 9, on: 'visible' %}
+    {% render 'qty-stepper', value: 5, min: 1, max: 9, on: 'idle visible' %}
   </div>
 
   <p class="rounded-lg border border-dashed border-stone-300 bg-white p-4 text-sm text-stone-600">

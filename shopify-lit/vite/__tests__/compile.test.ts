@@ -66,6 +66,37 @@ export class ListWidget extends ShopifyLitElement<{ items: { title: string }[] }
   assertIncludes(r!.liquidInnerHtml, '{% for item in items');
   assertIncludes(r!.liquidInnerHtml, '{{ item.title }}');
   assertIncludes(r!.liquidInnerHtml, '{% endfor %}');
+  assert.ok(!r!.liquidInnerHtml.includes('limit: limit'));
+}
+
+{
+  const src = `
+import { html, ShopifyLitElement, shopifyComponent, each, liquidFilter } from 'shopify-lit';
+@shopifyComponent({
+  tag: 'media-widget',
+  propsSource: 'product',
+  liquidContext: { media: 'product.media' },
+})
+export class MediaWidget extends ShopifyLitElement<{ media: { preview_image: { src: string }; alt?: string }[] }> {
+  render() {
+    return html\`
+      <div>
+        \${each(this.props.media.slice(0, 2), (media) => html\`
+          <img src=\${liquidFilter(media.preview_image, 'image_url: width: 800')} alt=\${media.alt} />
+        \`)}
+      </div>
+    \`;
+  }
+}
+`;
+  const r = compile(src, 'media-widget.ts');
+  assert.ok(r);
+  assert.equal(r!.errors.length, 0, r!.errors.join('; '));
+  assertIncludes(r!.liquidInnerHtml, '{% for media in product.media limit: 2 %}');
+  assertIncludes(r!.liquidInnerHtml, '{{ media.preview_image | image_url: width: 800 }}');
+  const { content } = emitLiquidSnippet(r!);
+  assertIncludes(content, '"media": {{ product.media | json }}');
+  assert.ok(!content.includes('image_url_2'));
 }
 
 {
@@ -148,6 +179,35 @@ export class QtyStepper extends ShopifyLitElement<{ value: number; min: number; 
   assertIncludes(content, 'vulpine-loader');
   assertIncludes(content, 'data-lit-ssr');
   assertIncludes(content, "@components/qty-stepper.ts");
+}
+
+{
+  const src = `
+import { html, nothing, ShopifyLitElement, shopifyComponent, clientOnly, liquidHTML } from 'shopify-lit';
+@shopifyComponent({
+  tag: 'shell-widget',
+  liquidContext: { body: 'body' },
+})
+export class ShellWidget extends ShopifyLitElement<{ body: string }> {
+  open = false;
+  render() {
+    return html\`
+      \${clientOnly(
+        { skeleton: html\`<div class="closed">\${liquidHTML(this.props.body)}</div>\` },
+        this.open
+          ? html\`<div class="open">\${liquidHTML(this.props.body)}</div>\`
+          : html\`<div class="closed">\${liquidHTML(this.props.body)}</div>\`,
+      )}
+    \`;
+  }
+}
+`;
+  const r = compile(src, 'shell-widget.ts');
+  assert.ok(r);
+  assert.equal(r!.errors.length, 0, r!.errors.join('; '));
+  assertIncludes(r!.liquidInnerHtml, 'class="closed"');
+  assertIncludes(r!.liquidInnerHtml, '{{ body }}');
+  assert.ok(!r!.liquidInnerHtml.includes('class="open"'));
 }
 
 console.log('shopify-lit compile tests: ok');

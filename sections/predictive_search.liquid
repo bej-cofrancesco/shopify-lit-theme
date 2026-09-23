@@ -1,0 +1,69 @@
+{%- comment -%}
+  Markup returned by /search/suggest?section_id=predictive_search
+{%- endcomment -%}
+<div class="flex flex-col gap-8" data-predictive-search>
+  {%- if predictive_search.resources.products.size > 0 -%}
+    <div class="flex flex-col gap-3">
+      <h3 class="text-3xs leading-sm tracking-2 font-bold uppercase text-gray-400">Products</h3>
+      <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4" role="list">
+        {%- for product in predictive_search.resources.products -%}
+          <li>{% render 'product-card', product: product, size: 'sm', on: 'idle' %}</li>
+        {%- endfor -%}
+      </ul>
+    </div>
+  {%- endif -%}
+
+  {%- if predictive_search.resources.collections.size > 0 -%}
+    <div class="flex flex-col gap-2">
+      <h3 class="text-3xs leading-sm tracking-2 font-bold uppercase text-gray-400">Collections</h3>
+      <ul class="flex flex-col">
+        {%- for collection in predictive_search.resources.collections -%}
+          <li>
+            <a
+              href="{{ collection.url }}"
+              data-search-term="{{ collection.title | escape }}"
+              class="group -mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-2 px-2 py-1.5 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-black"
+            >
+              <span>{{ collection.title }}</span>
+              <span class="text-gray-400" aria-hidden="true">&rsaquo;</span>
+            </a>
+          </li>
+        {%- endfor -%}
+      </ul>
+    </div>
+  {%- endif -%}
+
+  {%- if predictive_search.resources.queries.size > 0 -%}
+    <div class="flex flex-col gap-2">
+      <h3 class="text-3xs leading-sm tracking-2 font-bold uppercase text-gray-400">Suggestions</h3>
+      <ul class="flex flex-col">
+        {%- for query in predictive_search.resources.queries -%}
+          <li>
+            <a
+              href="{{ query.url }}"
+              data-search-term="{{ query.text | escape }}"
+              class="group -mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-2 px-2 py-1.5 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-black"
+            >
+              <span>{{ query.styled_text }}</span>
+              <span class="text-gray-400" aria-hidden="true">&rsaquo;</span>
+            </a>
+          </li>
+        {%- endfor -%}
+      </ul>
+    </div>
+  {%- endif -%}
+
+  {%- if predictive_search.resources.products.size == 0
+    and predictive_search.resources.collections.size == 0
+    and predictive_search.resources.queries.size == 0
+  -%}
+    <p class="text-sm text-gray-500">No results found</p>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "Predictive search",
+  "settings": []
+}
+{% endschema %}
