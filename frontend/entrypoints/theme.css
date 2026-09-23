@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+@import 'tailwindcss-safe-area';
+
+@source '../**/*.{js,ts,liquid}';
+@source '../../snippets/**/*.liquid';
+@source '../../sections/**/*.liquid';
+
+@layer base {
+  body {
+    @apply font-sans;
+  }
+}

@@ -1,0 +1,17 @@
+{% doc %}
+  Defers loading a Vite entry (same as skeleton: `{% render 'vite', entry: ... %}`)
+  until a trigger fires. DSD / host markup paints immediately.
+
+  @param {string} entry - Vite entry path, e.g. '@components/qty-stepper.ts'
+  @param {string} [on] - visible | idle | interaction (default: visible)
+  @param {string} content - Host markup to wrap (usually a DSD snippet)
+{% enddoc %}
+<vulpine-loader
+  class="block"
+  on="{{ on | default: 'visible' }}"
+>
+  <template data-vulpine-scripts>
+    {% render 'vite', entry: entry %}
+  </template>
+  {{ content }}
+</vulpine-loader>

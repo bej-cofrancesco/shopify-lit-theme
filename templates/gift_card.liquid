@@ -1,0 +1,14 @@
+{% layout none %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Gift card</title>
+    {{ content_for_header }}
+  </head>
+  <body>
+    <h1>{{ shop.name }}</h1>
+    <p>Balance: {{ gift_card.balance | money }}</p>
+  </body>
+</html>

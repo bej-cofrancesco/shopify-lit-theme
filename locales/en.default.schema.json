@@ -1,0 +1,40 @@
+{
+  "sections": {
+    "header": {
+      "name": "Header"
+    },
+    "main": {
+      "name": "DSD demo"
+    },
+    "page": {
+      "name": "Page"
+    },
+    "main-product": {
+      "name": "Product"
+    },
+    "main-collection": {
+      "name": "Collection"
+    },
+    "main-cart": {
+      "name": "Cart"
+    },
+    "main-search": {
+      "name": "Search"
+    },
+    "main-blog": {
+      "name": "Blog"
+    },
+    "main-article": {
+      "name": "Article"
+    },
+    "main-list-collections": {
+      "name": "Collections list"
+    },
+    "main-404": {
+      "name": "404"
+    },
+    "main-password": {
+      "name": "Password"
+    }
+  }
+}

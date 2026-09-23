@@ -1,0 +1,15 @@
+{
+  "general": {
+    "accessibility": {
+      "skip_to_content": "Skip to content"
+    }
+  },
+  "dsd": {
+    "title": "DSD + Lit islands",
+    "intro": "Declarative Shadow DOM paints first. vulpine-loader defers the Lit module. Lit hydrates the same shadow tree 1:1.",
+    "visible_heading": "Island: on visible",
+    "interaction_heading": "Island: on interaction (click)",
+    "interaction_hint": "Click the box to load the Lit module and hydrate.",
+    "no_js_note": "With JavaScript disabled you still see the stepper UI from Declarative Shadow DOM (non-interactive)."
+  }
+}

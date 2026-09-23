@@ -1,0 +1,12 @@
+<section>
+  <h1 class="text-2xl font-semibold">{{ product.title }}</h1>
+  <div class="mt-2 text-lg">{{ product.selected_or_first_available_variant.price | money }}</div>
+  <div class="prose mt-6">{{ product.description }}</div>
+</section>
+
+{% schema %}
+{
+  "name": "t:sections.main-product.name",
+  "settings": []
+}
+{% endschema %}

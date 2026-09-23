@@ -1,0 +1,17 @@
+<section>
+  <h1 class="text-2xl font-semibold">{{ collection.title }}</h1>
+  <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% for product in collection.products %}
+      <li>
+        <a class="hover:underline" href="{{ product.url }}">{{ product.title }}</a>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+
+{% schema %}
+{
+  "name": "t:sections.main-collection.name",
+  "settings": []
+}
+{% endschema %}
