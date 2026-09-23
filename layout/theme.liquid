@@ -30,8 +30,8 @@
 
     {%- liquid
       render 'importmap'
-      render 'vite' with 'theme.css', preload_stylesheet: true
-      render 'vite' with 'critical.ts'
+      render 'vite', entry: 'theme.css', preload_stylesheet: true
+      render 'vite', entry: 'critical.ts'
     -%}
 
     {{ content_for_header }}

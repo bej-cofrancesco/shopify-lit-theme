@@ -9,7 +9,7 @@ export default defineConfig({
   publicDir: 'public',
   resolve: {
     alias: {
-      '@entrypoints': resolve('frontend'),
+      '@entrypoints': resolve('frontend/entrypoints'),
       '@components': resolve('frontend/components'),
       '@frontend': resolve('frontend'),
       '@': resolve('frontend'),

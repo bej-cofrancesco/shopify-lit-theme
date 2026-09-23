@@ -2,13 +2,19 @@
   Defers loading a Vite entry (same as skeleton: `{% render 'vite', entry: ... %}`)
   until a trigger fires. DSD / host markup paints immediately.
 
+  For on: interaction, the click/key that triggered load is replayed after hydrate
+  so drawers/modals/buttons still perform their action (opt out with replay: false).
+
   @param {string} entry - Vite entry path, e.g. '@components/qty-stepper.ts'
   @param {string} [on] - visible | idle | interaction (default: visible)
+  @param {boolean} [replay] - Replay the triggering event after load (default true)
   @param {string} content - Host markup to wrap (usually a DSD snippet)
 {% enddoc %}
 <vulpine-loader
-  class="block"
   on="{{ on | default: 'visible' }}"
+  {% if replay == false or replay == 'false' %}
+    replay="false"
+  {% endif %}
 >
   <template data-vulpine-scripts>
     {% render 'vite', entry: entry %}

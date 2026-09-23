@@ -8,6 +8,7 @@
     "baseUrl": ".",
     "paths": {
       "@frontend/*": ["frontend/*"],
+      "@entrypoints/*": ["frontend/entrypoints/*"],
       "@components/*": ["frontend/components/*"],
       "@/*": ["frontend/*"],
       "~/*": ["frontend/*"]

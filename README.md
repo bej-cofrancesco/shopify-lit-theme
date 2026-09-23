@@ -18,31 +18,52 @@ pnpm build
 2. `frontend/components/qty-stepper.ts` — same markup in `render()`
 3. Lit reuses the existing shadow root when the module loads
 
-## How modules load (same as skeleton)
+## CSS in the shadow
 
-Skeleton does **not** hand-roll bare import maps for islands. It loads each component with:
+Same pattern as skeleton `BoilerplateElement`:
 
-```liquid
-{% render 'vite', entry: '@components/product_tile.ts' %}
+```ts
+import styles from '@/entrypoints/theme.css?inline';
+static styles = [unsafeCSS(styles)];
 ```
 
-`vulpine-loader` wraps that: the `vite` tags sit in a `<template>` and are injected when `on` fires (`visible` / `idle` / `interaction`).
+`QtyStepper` extends `BoilerplateElement`, so Tailwind utilities work inside the shadow after hydrate.
+
+## Intent replay (`on: interaction`)
+
+A click that only loads JS would feel broken on drawers/modals. `vulpine-loader`:
+
+1. Captures the click (capture phase)
+2. Injects the Vite entry and waits for custom elements to upgrade
+3. **Replays** the click on the original target so the real `@click` / `show()` handler runs
 
 ```liquid
-{% capture host %}
-  {% render 'qty-stepper-dsd', value: 1, min: 1, max: 9 %}
-{% endcapture %}
 {% render 'vulpine-loader',
   entry: '@components/qty-stepper.ts',
-  on: 'visible',
+  on: 'interaction',
   content: host
 %}
 ```
 
-`vite-plugin-shopify-import-maps` (`bareModules: true`) **auto-generates** `snippets/importmap.liquid` on **`pnpm build`** so production entry scripts can resolve each other. During Vite dest the map stays empty; modules still load because `vite.liquid` points at the tunnel URL (same as skeleton).
+Opt out: `replay: false`.
+
+## How modules load (same as skeleton)
+
+```liquid
+{% capture host %}
+  {% render 'qty-stepper-dsd', value: 3, min: 1, max: 9 %}
+{% endcapture %}
+{% render 'vulpine-loader',
+  entry: '@components/qty-stepper.ts',
+  on: 'interaction',
+  content: host
+%}
+```
+
+`vite-plugin-shopify-import-maps` auto-generates `snippets/importmap.liquid` on **`pnpm build`**. During Vite dest the map may be empty; modules still load via `vite.liquid` tunnel URLs.
 
 ## Adding a component
 
-1. `frontend/components/my-widget.ts` (+ matching `snippets/my-widget-dsd.liquid`)
-2. It’s picked up by `additionalEntrypoints: ['frontend/components/**']`
-3. `{% render 'vulpine-loader', entry: '@components/my-widget.ts', ... %}`
+1. Extend `BoilerplateElement` in `frontend/components/my-widget.ts`
+2. Matching `snippets/my-widget-dsd.liquid`
+3. `{% render 'vulpine-loader', entry: '@components/my-widget.ts', on: 'interaction', ... %}`

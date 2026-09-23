@@ -1,7 +1,11 @@
 /// <reference types="vite/client" />
 
-// Type declarations for @frontend and @ aliases with CSS imports
-declare module '@frontend/*.css?inline' {
+declare module '@entrypoints/*.css?inline' {
+  const content: string;
+  export default content;
+}
+
+declare module '@/entrypoints/*.css?inline' {
   const content: string;
   export default content;
 }
@@ -12,6 +16,11 @@ declare module '@/*.css?inline' {
 }
 
 declare module '@frontend/*' {
+  const content: any;
+  export default content;
+}
+
+declare module '@entrypoints/*' {
   const content: any;
   export default content;
 }
