@@ -6,38 +6,9 @@
     <nav class="flex items-center gap-4 text-sm" aria-label="Primary">
       <a class="hover:underline" href="{{ routes.root_url }}">Home</a>
       <a class="hover:underline" href="{{ routes.cart_url }}">Cart</a>
-      {%- capture search_trigger_html -%}
-        <span
-          class="inline-flex h-9 w-9 items-center justify-center text-stone-700 transition-colors hover:bg-stone-100"
-          aria-hidden="true"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            class="h-5 w-5"
-          >
-            <path
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="m21 21-4.35-4.35M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z"
-            />
-          </svg>
-        </span>
-      {%- endcapture -%}
-      {% render 'event-trigger',
-        event: 'search:open',
-        html: search_trigger_html,
-        label: 'Search',
-        skip_script: true
-      %}
     </nav>
   </div>
 </header>
-
-{% render 'search-drawer-mount' %}
 
 {% schema %}
 {

@@ -3,7 +3,7 @@
   "version": "1.0.0-alpha.1",
   "private": true,
   "type": "module",
-  "description": "shopify-lit islands demo — Lit render() compiled to Liquid + absorb on the client.",
+  "description": "Shopify theme starter — Lit islands via shopify-lit + vulpine-loader.",
   "license": "MIT",
   "scripts": {
     "postinstall": "patch-package",

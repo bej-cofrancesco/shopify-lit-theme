@@ -1,21 +1,22 @@
 # dsd-example — shopify-lit islands
 
-Author Lit components with **`shopify-lit`**. Vite compiles `render()` to Liquid
-snippets under `dist/`, syncs theme files from `src/`, and Shopify CLI pushes
-`dist/`.
+Empty Shopify theme with **`shopify-lit`** + **`vulpine-loader`**. Put Lit
+components in `src/frontend/components`; Vite compiles them to Liquid under
+`dist/` and Shopify CLI pushes `dist/`.
 
 ## Layout
 
 ```
 packages/
-  shopify-lit/                         # Lit + Liquid compiler (workspace)
+  shopify-lit/                         # Lit → Liquid compiler
   vite-plugin-tailwind-content-reload/ # Tailwind content HMR helper
-src/                                   # Theme source (Liquid + frontend)
-  frontend/components/                 # @shopifyComponent islands
+src/                                   # Theme source
+  frontend/components/                 # your @shopifyComponent islands
   frontend/entrypoints/                # theme.css, critical.ts
-  layout|sections|snippets|templates|…
+  frontend/lib/vulpine-loader.ts
+  snippets/vulpine-loader.liquid
+  layout|sections|templates|…
 dist/                                  # Built theme (Shopify --path dist)
-vite.config.ts
 ```
 
 ## Commands
@@ -30,10 +31,11 @@ pnpm release       # build + shopify theme push --path dist
 
 ## How it works
 
-1. `@shopifyComponent` components live in `src/frontend/components`
-2. `themeSync` mirrors `src/{layout,sections,…}` → `dist/`
-3. `shopify-lit` writes compiled islands into `dist/snippets`
-4. Vite builds JS/CSS into `dist/assets`
+1. Add a `@shopifyComponent` under `src/frontend/components`
+2. `shopify-lit` emits `dist/snippets/<name>.liquid`
+3. Render via `{% render 'vulpine-loader', entry: '@components/…', html: … %}`
+   (or `{% render '<name>' %}` for the generated snippet)
+4. `themeSync` mirrors the rest of `src/` → `dist/`
 5. Shopify CLI uses `--path dist`
 
 Client-only UI: wrap in `clientOnly({ skeleton: html\`…\` }, live)`.

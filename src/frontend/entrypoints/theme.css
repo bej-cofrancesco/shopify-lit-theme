@@ -11,19 +11,8 @@
     @apply font-sans;
   }
 
-  /* Transparent hosts — layout lives in inner DSD / Lit markup */
-  vulpine-loader,
-  event-trigger,
-  qty-stepper,
-  product-card {
+  /* Transparent host — layout lives in the wrapped island markup */
+  vulpine-loader {
     display: contents;
-  }
-}
-
-@utility no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
   }
 }
