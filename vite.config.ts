@@ -3,8 +3,9 @@ import tailwindcss from '@tailwindcss/vite';
 import shopify from 'vite-plugin-shopify';
 import pageReload from 'vite-plugin-page-reload';
 import importMaps from 'vite-plugin-shopify-import-maps';
-import { shopifyLit } from './shopify-lit/vite/index.ts';
-import { tailwindContentReload } from './frontend/lib/tailwind-content-reload.ts';
+import { shopifyLit } from './packages/shopify-lit/vite/index.ts';
+import { tailwindContentReload } from './packages/vite-plugin-tailwind-content-reload/src/index.ts';
+import { themeSync } from './vite/theme-sync.ts';
 import { existsSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
@@ -47,7 +48,9 @@ function findPnpmPackage(name: string, near: string): string {
  * Production lit mangles those — pin development builds so absorb + updates work.
  */
 const litHtml = findPkgRoot(
-  require.resolve('lit-html', { paths: [join(root, 'shopify-lit'), root] }),
+  require.resolve('lit-html', {
+    paths: [join(root, 'packages/shopify-lit'), root],
+  }),
 );
 const litElementRoot = findPnpmPackage('lit-element', litHtml);
 const reactiveRoot = findPnpmPackage('@lit/reactive-element', litHtml);
@@ -80,7 +83,7 @@ const litDevAliases = [
 ];
 
 export default defineConfig(({ command }) => ({
-  publicDir: 'public',
+  publicDir: false,
   server: {
     // Cloudflare quick tunnels dial 127.0.0.1. `host: 'localhost'` can bind
     // IPv6-only (::1) on macOS, so the tunnel URL comes up but assets 404.
@@ -91,42 +94,61 @@ export default defineConfig(({ command }) => ({
   resolve: {
     alias: [
       ...litDevAliases,
-      { find: '@entrypoints', replacement: resolve('frontend/entrypoints') },
-      { find: '@components', replacement: resolve('frontend/components') },
-      { find: '@frontend', replacement: resolve('frontend') },
-      { find: '@', replacement: resolve('frontend') },
-      { find: '~', replacement: resolve('frontend') },
+      { find: '@entrypoints', replacement: resolve('src/frontend/entrypoints') },
+      { find: '@components', replacement: resolve('src/frontend/components') },
+      { find: '@frontend', replacement: resolve('src/frontend') },
+      { find: '@', replacement: resolve('src/frontend') },
+      { find: '~', replacement: resolve('src/frontend') },
       {
         find: 'shopify-lit/decorators',
-        replacement: resolve('shopify-lit/src/decorators.ts'),
+        replacement: resolve('packages/shopify-lit/src/decorators.ts'),
       },
       {
         find: 'shopify-lit/vite',
-        replacement: resolve('shopify-lit/vite/index.ts'),
+        replacement: resolve('packages/shopify-lit/vite/index.ts'),
       },
-      { find: 'shopify-lit', replacement: resolve('shopify-lit/src/index.ts') },
+      {
+        find: 'shopify-lit',
+        replacement: resolve('packages/shopify-lit/src/index.ts'),
+      },
     ],
   },
   plugins: [
-    // Before Tailwind so snippet writes are on disk when CSS rescans
+    // Mirror src theme → dist before Shopify / shopify-lit write into dist
+    themeSync({
+      srcDir: 'src',
+      outDir: 'dist',
+      preserveSnippetNames: ['vite.liquid', 'importmap.liquid'],
+    }),
+    // Compile @shopifyComponent render() → dist/snippets
     shopifyLit({
-      componentsDir: 'frontend/components',
-      outputDir: 'snippets',
+      componentsDir: 'src/frontend/components',
+      outputDir: 'dist/snippets',
       modulePrefix: '@components',
     }),
     tailwindcss(),
     tailwindContentReload({
-      cssEntry: 'frontend/entrypoints/theme.css',
-      watch: ['frontend/components', 'snippets', 'frontend/entrypoints'],
+      cssEntry: 'src/frontend/entrypoints/theme.css',
+      watch: [
+        'src/frontend/components',
+        'src/snippets',
+        'dist/snippets',
+        'src/frontend/entrypoints',
+      ],
     }),
     shopify({
+      themeRoot: 'dist',
+      sourceCodeDir: 'src/frontend',
+      entrypointsDir: 'src/frontend/entrypoints',
       tunnel: true,
       snippetFile: 'vite.liquid',
-      additionalEntrypoints: ['frontend/components/**/*.{js,ts}'],
+      additionalEntrypoints: ['src/frontend/components/**/*.{js,ts}'],
     }),
     pageReload('/tmp/theme.update', {
       delay: 500,
     }),
-    ...(command === 'build' ? [importMaps({ bareModules: true })] : []),
+    ...(command === 'build'
+      ? [importMaps({ bareModules: true, themeRoot: 'dist' })]
+      : []),
   ],
 }));

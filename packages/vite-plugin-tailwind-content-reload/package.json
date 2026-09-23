@@ -1,0 +1,13 @@
+{
+  "name": "vite-plugin-tailwind-content-reload",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Invalidate Tailwind CSS entry and full-reload when content sources change",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
+  }
+}

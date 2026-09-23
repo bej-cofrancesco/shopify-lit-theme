@@ -1,37 +1,39 @@
 # dsd-example — shopify-lit islands
 
-Author Lit components with **`shopify-lit`**. The Vite plugin compiles `render()` to Liquid snippets. On the client, `ShopifyLitElement` absorbs the SSR DOM (bind handlers, no flicker).
+Author Lit components with **`shopify-lit`**. Vite compiles `render()` to Liquid
+snippets under `dist/`, syncs theme files from `src/`, and Shopify CLI pushes
+`dist/`.
+
+## Layout
+
+```
+packages/
+  shopify-lit/                         # Lit + Liquid compiler (workspace)
+  vite-plugin-tailwind-content-reload/ # Tailwind content HMR helper
+src/                                   # Theme source (Liquid + frontend)
+  frontend/components/                 # @shopifyComponent islands
+  frontend/entrypoints/                # theme.css, critical.ts
+  layout|sections|snippets|templates|…
+dist/                                  # Built theme (Shopify --path dist)
+vite.config.ts
+```
 
 ## Commands
 
 ```bash
 pnpm install
-pnpm dest          # or: shopify theme dest + vite
-pnpm build         # compiles snippets + Vite assets
+pnpm dev           # shopify theme dev --path dist + vite
+pnpm build         # sync src → dist + Vite assets + compiled snippets
 pnpm test:compile  # AST → Liquid unit tests
+pnpm release       # build + shopify theme push --path dist
 ```
-
-`dev` / `build` run the `shopify-lit` Vite plugin on start (writes `snippets/*.liquid`).
 
 ## How it works
 
-1. Components import from `shopify-lit` and use `@shopifyComponent({ tag, … })`
-2. Vite plugin compiles `frontend/components/**/*.ts` → `snippets/<name>.liquid`
-3. Snippet wraps host markup in `vulpine-loader`
-4. Client island loads → absorb wires lit parts onto Liquid DOM; later `requestUpdate()` / prop changes patch in place via `render()`
+1. `@shopifyComponent` components live in `src/frontend/components`
+2. `themeSync` mirrors `src/{layout,sections,…}` → `dist/`
+3. `shopify-lit` writes compiled islands into `dist/snippets`
+4. Vite builds JS/CSS into `dist/assets`
+5. Shopify CLI uses `--path dist`
 
-Light DOM + global `theme.css` (Tailwind `@source` covers component files).
-
-## New component
-
-1. `frontend/components/my-widget.ts` — extend `ShopifyLitElement`, decorate with `@shopifyComponent`
-2. Use `this.props.*`, `liquidFilter()`, `each()` / `.map` → for, ternary, `@click=${this.onX}`, `nest()`, `liquidHTML()`
-3. Client-only UI (open state, fetch results, localStorage): wrap in `clientOnly({ skeleton: html`…` }, live)` — Liquid emits the skeleton; the client runs the live branch
-4. Save — plugin writes `snippets/my-widget.liquid`
-5. `{% render 'my-widget', … %}`
-
-`@shopifyComponent` always means auto-generated Liquid. Theme data prep (collections, settings) belongs in the caller / a thin mount snippet.
-
-## Package
-
-In-repo workspace package: `shopify-lit/` (`shopify-lit` + `shopify-lit/vite`).
+Client-only UI: wrap in `clientOnly({ skeleton: html\`…\` }, live)`.

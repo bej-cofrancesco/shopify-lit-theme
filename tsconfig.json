@@ -7,15 +7,18 @@
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
-      "@frontend/*": ["frontend/*"],
-      "@entrypoints/*": ["frontend/entrypoints/*"],
-      "@components/*": ["frontend/components/*"],
-      "shopify-lit": ["shopify-lit/src/index.ts"],
-      "shopify-lit/decorators": ["shopify-lit/src/decorators.ts"],
-      "shopify-lit/vite": ["shopify-lit/vite/index.ts"],
-      "shopify-lit/*": ["shopify-lit/src/*"],
-      "@/*": ["frontend/*"],
-      "~/*": ["frontend/*"]
+      "@frontend/*": ["src/frontend/*"],
+      "@entrypoints/*": ["src/frontend/entrypoints/*"],
+      "@components/*": ["src/frontend/components/*"],
+      "shopify-lit": ["packages/shopify-lit/src/index.ts"],
+      "shopify-lit/decorators": ["packages/shopify-lit/src/decorators.ts"],
+      "shopify-lit/vite": ["packages/shopify-lit/vite/index.ts"],
+      "shopify-lit/*": ["packages/shopify-lit/src/*"],
+      "vite-plugin-tailwind-content-reload": [
+        "packages/vite-plugin-tailwind-content-reload/src/index.ts"
+      ],
+      "@/*": ["src/frontend/*"],
+      "~/*": ["src/frontend/*"]
     },
     "resolveJsonModule": true,
     "esModuleInterop": true,
@@ -29,6 +32,12 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": false
   },
-    "include": ["frontend/**/*", "shopify-lit/**/*", "vite.config.ts", "vite-env.d.ts"],
-  "exclude": ["assets", "dist", "node_modules"]
+  "include": [
+    "src/frontend/**/*",
+    "packages/**/*",
+    "vite/**/*",
+    "vite.config.ts",
+    "vite-env.d.ts"
+  ],
+  "exclude": ["dist", "node_modules"]
 }

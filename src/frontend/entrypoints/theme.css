@@ -1,10 +1,10 @@
 @import 'tailwindcss';
 @import 'tailwindcss-safe-area';
 
-@source '../**/*.{js,ts,liquid}';
+@source '../../**/*.{js,ts,liquid}';
 @source '../components/**/*.{js,ts}';
-@source '../../snippets/**/*.liquid';
-@source '../../sections/**/*.liquid';
+@source '../../../dist/snippets/**/*.liquid';
+@source '../../../dist/sections/**/*.liquid';
 
 @layer base {
   body {

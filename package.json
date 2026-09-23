@@ -7,10 +7,10 @@
   "license": "MIT",
   "scripts": {
     "postinstall": "patch-package",
-    "dev": "concurrently -rkP -n shopify,vite -p \"[{name}]\" \"shopify theme dev {@}\" \"vite\"",
+    "dev": "concurrently -rkP -n shopify,vite -p \"[{name}]\" \"shopify theme dev --path dist {@}\" \"vite\"",
     "build": "vite build",
-    "test:compile": "tsx shopify-lit/vite/__tests__/compile.test.ts",
-    "release": "pnpm run build && shopify theme push -e dev",
+    "test:compile": "tsx packages/shopify-lit/vite/__tests__/compile.test.ts",
+    "release": "pnpm run build && shopify theme push -e dev --path dist",
     "format": "prettier --write --cache .",
     "format-check": "prettier --check .",
     "lint": "eslint --cache .",
@@ -34,7 +34,8 @@
     "vite": "^7.2.4",
     "vite-plugin-page-reload": "^0.2.2",
     "vite-plugin-shopify": "^4.1.0",
-    "vite-plugin-shopify-import-maps": "^0.5.4"
+    "vite-plugin-shopify-import-maps": "^0.5.4",
+    "vite-plugin-tailwind-content-reload": "workspace:*"
   },
   "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971",
   "dependencies": {

@@ -49,10 +49,8 @@ secrets.json
 .ruby-version
 .eslintcache
 
-assets/*.min.*
-assets/.vite
-assets/*
-
-/snippets/vite.liquid
-
 shopify.theme.toml
+
+# Generated into dist/ by Vite; source lives under src/
+dist/snippets/vite.liquid
+dist/snippets/importmap.liquid
