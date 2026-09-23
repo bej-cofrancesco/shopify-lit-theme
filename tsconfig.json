@@ -11,8 +11,9 @@
       "@entrypoints/*": ["frontend/entrypoints/*"],
       "@components/*": ["frontend/components/*"],
       "shopify-lit": ["shopify-lit/src/index.ts"],
-      "shopify-lit/*": ["shopify-lit/src/*"],
+      "shopify-lit/decorators": ["shopify-lit/src/decorators.ts"],
       "shopify-lit/vite": ["shopify-lit/vite/index.ts"],
+      "shopify-lit/*": ["shopify-lit/src/*"],
       "@/*": ["frontend/*"],
       "~/*": ["frontend/*"]
     },

@@ -6,7 +6,8 @@
   "description": "Typed Lit authoring + Vite Liquid compiler for Shopify themes",
   "exports": {
     ".": "./src/index.ts",
-    "./vite": "./vite/index.ts"
+    "./vite": "./vite/index.ts",
+    "./decorators": "./src/decorators.ts"
   },
   "dependencies": {
     "lit-html": "^3.3.1",

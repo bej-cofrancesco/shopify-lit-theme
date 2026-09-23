@@ -89,6 +89,10 @@ export default defineConfig(({ command }) => ({
       { find: '@', replacement: resolve('frontend') },
       { find: '~', replacement: resolve('frontend') },
       {
+        find: 'shopify-lit/decorators',
+        replacement: resolve('shopify-lit/src/decorators.ts'),
+      },
+      {
         find: 'shopify-lit/vite',
         replacement: resolve('shopify-lit/vite/index.ts'),
       },
