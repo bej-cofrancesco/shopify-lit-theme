@@ -3,11 +3,13 @@
   "version": "1.0.0-alpha.1",
   "private": true,
   "type": "module",
-  "description": "Declarative Shadow DOM + Lit hydrate island demo on skeleton-theme tooling.",
+  "description": "shopify-lit islands demo — Lit render() compiled to Liquid + absorb on the client.",
   "license": "MIT",
   "scripts": {
+    "postinstall": "patch-package",
     "dev": "concurrently -rkP -n shopify,vite -p \"[{name}]\" \"shopify theme dev {@}\" \"vite\"",
     "build": "vite build",
+    "test:compile": "tsx shopify-lit/vite/__tests__/compile.test.ts",
     "release": "pnpm run build && shopify theme push -e dev",
     "format": "prettier --write --cache .",
     "format-check": "prettier --check .",
@@ -23,9 +25,11 @@
     "eslint": "^9.37.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^16.4.0",
+    "patch-package": "^8.0.0",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
     "tailwindcss": "^4.1.14",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^7.2.4",
     "vite-plugin-page-reload": "^0.2.2",
@@ -34,8 +38,8 @@
   },
   "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971",
   "dependencies": {
-    "@lit-labs/ssr-client": "^1.1.7",
     "lit": "^3.3.1",
+    "shopify-lit": "workspace:*",
     "tailwindcss-safe-area": "^1.3.0"
   }
 }

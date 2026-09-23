@@ -87,17 +87,64 @@ export class VulpineLoader extends HTMLElement {
       return;
     }
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          io.disconnect();
-          void this.#load();
+    // `display: contents` hosts have no box — IO on `this` never intersects.
+    // Wait a frame for DSD layout, then observe the first descendant with a box.
+    const start = () => {
+      if (signal.aborted || this.#loaded || this.#loading) return;
+      const target = this.#intersectionTarget();
+      if (!target) {
+        void this.#load();
+        return;
+      }
+
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            io.disconnect();
+            void this.#load();
+          }
+        },
+        { rootMargin: '100px' },
+      );
+      io.observe(target);
+      signal.addEventListener('abort', () => io.disconnect());
+    };
+
+    requestAnimationFrame(() => requestAnimationFrame(start));
+  }
+
+  /**
+   * First element under this loader that generates a layout box
+   * (walks open shadow roots; skips templates / display:contents shells).
+   */
+  #intersectionTarget(): Element | null {
+    const visit = (root: ParentNode): Element | null => {
+      for (const el of root.querySelectorAll('*')) {
+        if (el instanceof HTMLTemplateElement) continue;
+        if (!(el instanceof HTMLElement)) continue;
+        if (el.localName === 'vulpine-loader') continue;
+
+        const style = getComputedStyle(el);
+        if (style.display === 'contents' || style.display === 'none') {
+          if (el.shadowRoot) {
+            const nested = visit(el.shadowRoot);
+            if (nested) return nested;
+          }
+          continue;
         }
-      },
-      { rootMargin: '100px' },
-    );
-    io.observe(this);
-    signal.addEventListener('abort', () => io.disconnect());
+
+        const { width, height } = el.getBoundingClientRect();
+        if (width > 0 || height > 0) return el;
+
+        if (el.shadowRoot) {
+          const nested = visit(el.shadowRoot);
+          if (nested) return nested;
+        }
+      }
+      return null;
+    };
+
+    return visit(this);
   }
 
   async #load(replay = false) {

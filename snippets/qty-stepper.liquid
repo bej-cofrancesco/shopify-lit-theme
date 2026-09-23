@@ -1,35 +1,23 @@
-import { html, ShopifyLitElement, shopifyComponent } from 'shopify-lit';
-
-export interface QtyStepperProps {
-  value: number;
-  min: number;
-  max: number;
-}
-
-@shopifyComponent({
-  tag: 'qty-stepper',
-  liquidContext: {
-    value: 'value',
-    min: 'min',
-    max: 'max',
-  },
-  moduleSpecifier: '@components/qty-stepper.ts',
-  snippet: 'qty-stepper',
-})
-export class QtyStepper extends ShopifyLitElement<QtyStepperProps> {
-  private bump(delta: number) {
-    const { min, max, value } = this.props;
-    const next = Math.min(max, Math.max(min, value + delta));
-    if (next === value) return;
-    this.props.value = next;
+{% comment %}
+  AUTO-GENERATED from qty-stepper.ts by shopify-lit
+  Do not edit by hand.
+{% endcomment %}
+{% assign on = on | default: 'visible' %}
+{% liquid
+  assign value = value | default: 1
+  assign min = min | default: 1
+  assign max = max | default: 9
+%}
+{% capture props %}
+  {
+    "value": {{ value | json }},
+    "min": {{ min | json }},
+    "max": {{ max | json }}
   }
-
-  onDec = () => this.bump(-1);
-  onInc = () => this.bump(1);
-
-  render() {
-    return html`
-      <div
+{% endcapture %}
+{% capture html %}
+<qty-stepper data-lit-ssr props="{{ props | escape }}">
+<div
         class="inline-flex items-center gap-3 rounded-xl border border-stone-200 bg-white px-3 py-2 shadow-sm"
         role="group"
         aria-label="Quantity"
@@ -38,23 +26,28 @@ export class QtyStepper extends ShopifyLitElement<QtyStepperProps> {
           type="button"
           class="flex h-8 w-8 items-center justify-center rounded-lg border border-stone-200 text-stone-700 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Decrease quantity"
-          @click=${this.onDec}
+          data-lit-on-click="onDec"
         >
           −
         </button>
         <span
           class="min-w-[2ch] text-center text-base font-semibold tabular-nums text-stone-900"
           aria-live="polite"
-        >${this.props.value}</span>
+        >{{ value }}</span>
         <button
           type="button"
           class="flex h-8 w-8 items-center justify-center rounded-lg border border-stone-200 text-stone-700 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Increase quantity"
-          @click=${this.onInc}
+          data-lit-on-click="onInc"
         >
           +
         </button>
       </div>
-    `;
-  }
-}
+</qty-stepper>
+{% endcapture %}
+{% render 'vulpine-loader',
+  entry: '@components/qty-stepper.ts',
+  on: on,
+  replay: replay,
+  html: html
+%}

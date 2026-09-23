@@ -1,69 +1,34 @@
-# DSD Example
+# dsd-example — shopify-lit islands
 
-Skeleton-theme layout demo: **Declarative Shadow DOM** → **`vulpine-loader` island** → **Lit adopts the same shadow tree**.
-
-Aligned with [`skeleton-theme-develop`](/Users/benjamincofrancesco/Documents/skeleton-theme-develop): Vite, `vite-plugin-shopify`, `vite-plugin-shopify-import-maps`, and loading components via `{% render 'vite', entry: '@components/...' %}`.
+Author Lit components with **`shopify-lit`**. The Vite plugin compiles `render()` to Liquid snippets. On the client, `ShopifyLitElement` absorbs the SSR DOM (bind handlers, no flicker).
 
 ## Commands
 
 ```bash
 pnpm install
-pnpm dev -- --store your-store.myshopify.com --live-reload full-page
-pnpm build
+pnpm dest          # or: shopify theme dest + vite
+pnpm build         # compiles snippets + Vite assets
+pnpm test:compile  # AST → Liquid unit tests
 ```
 
-## The 1:1 rule
+`dev` / `build` run the `shopify-lit` Vite plugin on start (writes `snippets/*.liquid`).
 
-1. `snippets/qty-stepper-dsd.liquid` — Declarative Shadow DOM markup
-2. `frontend/components/qty-stepper.ts` — same markup in `render()`
-3. Lit reuses the existing shadow root when the module loads
+## How it works
 
-## CSS in the shadow
+1. Components import from `shopify-lit` and use `@shopifyComponent({ tag, … })`
+2. Vite plugin compiles `frontend/components/**/*.ts` → `snippets/<name>.liquid`
+3. Snippet wraps host markup in `vulpine-loader`
+4. Client island loads → absorb wires lit parts onto Liquid DOM; later `requestUpdate()` / prop changes patch in place via `render()`
 
-Same pattern as skeleton `BoilerplateElement`:
+Light DOM + global `theme.css` (Tailwind `@source` covers component files).
 
-```ts
-import styles from '@/entrypoints/theme.css?inline';
-static styles = [unsafeCSS(styles)];
-```
+## New component
 
-`QtyStepper` extends `BoilerplateElement`, so Tailwind utilities work inside the shadow after hydrate.
+1. `frontend/components/my-widget.ts` — extend `ShopifyLitElement`, decorate with `@shopifyComponent`
+2. Use `this.props.*`, `liquidFilter()`, `.map` → for, ternary, `@click=${this.method}`, `nest()`
+3. Save — plugin writes `snippets/my-widget.liquid`
+4. `{% render 'my-widget', … %}`
 
-## Intent replay (`on: interaction`)
+## Package
 
-A click that only loads JS would feel broken on drawers/modals. `vulpine-loader`:
-
-1. Captures the click (capture phase)
-2. Injects the Vite entry and waits for custom elements to upgrade
-3. **Replays** the click on the original target so the real `@click` / `show()` handler runs
-
-```liquid
-{% render 'vulpine-loader',
-  entry: '@components/qty-stepper.ts',
-  on: 'interaction',
-  content: host
-%}
-```
-
-Opt out: `replay: false`.
-
-## How modules load (same as skeleton)
-
-```liquid
-{% capture host %}
-  {% render 'qty-stepper-dsd', value: 3, min: 1, max: 9 %}
-{% endcapture %}
-{% render 'vulpine-loader',
-  entry: '@components/qty-stepper.ts',
-  on: 'interaction',
-  content: host
-%}
-```
-
-`vite-plugin-shopify-import-maps` auto-generates `snippets/importmap.liquid` on **`pnpm build`**. During Vite dest the map may be empty; modules still load via `vite.liquid` tunnel URLs.
-
-## Adding a component
-
-1. Extend `BoilerplateElement` in `frontend/components/my-widget.ts`
-2. Matching `snippets/my-widget-dsd.liquid`
-3. `{% render 'vulpine-loader', entry: '@components/my-widget.ts', on: 'interaction', ... %}`
+In-repo workspace package: `shopify-lit/` (`shopify-lit` + `shopify-lit/vite`).

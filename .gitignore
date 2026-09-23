@@ -54,6 +54,5 @@ assets/.vite
 assets/*
 
 /snippets/vite.liquid
-/snippets/importmap.liquid
 
 shopify.theme.toml

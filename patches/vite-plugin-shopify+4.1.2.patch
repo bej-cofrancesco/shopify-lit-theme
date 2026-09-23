@@ -1,0 +1,121 @@
+--- a/node_modules/vite-plugin-shopify/dist/index.js
++++ b/node_modules/vite-plugin-shopify/dist/index.js
+@@ -35,6 +35,7 @@
+ import glob from "fast-glob";
+ import createDebugger from "debug";
+ var debug = createDebugger("vite-plugin-shopify:config");
++var GLOB_META_REGEX = /[*[{?]/;
+ function shopifyConfig(options) {
+   return {
+     name: "vite-plugin-shopify-config",
+@@ -47,10 +48,34 @@
+         "~": path3.resolve(options.sourceCodeDir),
+         "@": path3.resolve(options.sourceCodeDir)
+       };
+-      const input = glob.sync([
++      const entrypointPatterns = [
+         normalizePath2(path3.join(options.entrypointsDir, "**/*")),
+-        ...options.additionalEntrypoints
+-      ], { onlyFiles: true });
++        ...options.additionalEntrypoints.map((pattern) => normalizePath2(pattern))
++      ];
++      const input = glob.sync(entrypointPatterns, { onlyFiles: true });
++      const configuredRollupOptions = config.build?.rollupOptions ?? {};
++      const dynamicInputPlugin = {
++        name: "vite-plugin-shopify-dynamic-input",
++        buildStart() {
++          entrypointPatterns.forEach((pattern) => {
++            const normalizedPattern = normalizePath2(path3.resolve(pattern));
++            const globIndex = normalizedPattern.search(GLOB_META_REGEX);
++            const watchTarget = globIndex === -1 ? normalizedPattern : normalizedPattern.slice(0, globIndex).replace(/\/$/, "");
++            if (watchTarget.length > 0) {
++              this.addWatchFile(watchTarget);
++            }
++          });
++        },
++        options(rollupOptions) {
++          if (typeof configuredRollupOptions.input !== "undefined") {
++            return null;
++          }
++          return {
++            ...rollupOptions,
++            input: glob.sync(entrypointPatterns, { onlyFiles: true })
++          };
++        }
++      };
+       const generatedConfig = {
+         // Use relative base path so to load imported assets from Shopify CDN
+         base: config.base ?? "./",
+@@ -63,7 +88,12 @@
+           assetsDir: config.build?.assetsDir ?? "",
+           // Configure bundle entry points
+           rollupOptions: {
+-            input: config.build?.rollupOptions?.input ?? input
++            ...configuredRollupOptions,
++            input: configuredRollupOptions.input ?? input,
++            plugins: [
++              ...(configuredRollupOptions.plugins ?? []),
++              ...(typeof configuredRollupOptions.input === "undefined" ? [dynamicInputPlugin] : [])
++            ]
+           },
+           // Output manifest file for backend integration
+           manifest: typeof config.build?.manifest === "string" ? config.build.manifest : true
+@@ -110,6 +140,36 @@
+       };
+       debug(generatedConfig);
+       return generatedConfig;
++    },
++    configureServer(server) {
++      const additionalEntrypointPatterns = options.additionalEntrypoints.map((pattern) => normalizePath2(pattern));
++      if (additionalEntrypointPatterns.length === 0) {
++        return;
++      }
++      const resolveAdditionalEntrypoints = () => new Set(
++        glob.sync(additionalEntrypointPatterns, { onlyFiles: true, absolute: true }).map((filePath) => normalizePath2(filePath))
++      );
++      let trackedEntrypoints = resolveAdditionalEntrypoints();
++      let restartTimer;
++      const queueRestart = (eventName, filePath) => {
++        const normalizedPath = normalizePath2(path3.resolve(filePath));
++        const wasTracked = trackedEntrypoints.has(normalizedPath);
++        trackedEntrypoints = resolveAdditionalEntrypoints();
++        const isTracked = trackedEntrypoints.has(normalizedPath);
++        if (!wasTracked && !isTracked) {
++          return;
++        }
++        if (restartTimer) {
++          clearTimeout(restartTimer);
++        }
++        restartTimer = setTimeout(() => {
++          debug(`Restarting dev server after "${eventName}" on ${filePath}`);
++          void server.restart();
++          restartTimer = void 0;
++        }, 50);
++      };
++      server.watcher.on("add", (filePath) => queueRestart("add", filePath));
++      server.watcher.on("unlink", (filePath) => queueRestart("unlink", filePath));
+     }
+   };
+ }
+@@ -233,9 +293,18 @@
+         return;
+       }
+       const assetTags = [];
+-      const manifest = JSON.parse(
+-        fs.readFileSync(manifestFilePath, "utf8")
+-      );
++      const manifestRaw = fs.readFileSync(manifestFilePath, "utf8").trim();
++      if (manifestRaw.length === 0) {
++        debug2(`Skipping vite-tag generation: manifest is empty at ${manifestFilePath}`);
++        return;
++      }
++      let manifest;
++      try {
++        manifest = JSON.parse(manifestRaw);
++      } catch (error) {
++        debug2(`Skipping vite-tag generation: manifest is not valid JSON at ${manifestFilePath}`, error);
++        return;
++      }
+       Object.keys(manifest).forEach((src) => {
+         const { file, isEntry, css, imports } = manifest[src];
+         const ext = path4.extname(src);

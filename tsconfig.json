@@ -10,6 +10,9 @@
       "@frontend/*": ["frontend/*"],
       "@entrypoints/*": ["frontend/entrypoints/*"],
       "@components/*": ["frontend/components/*"],
+      "shopify-lit": ["shopify-lit/src/index.ts"],
+      "shopify-lit/*": ["shopify-lit/src/*"],
+      "shopify-lit/vite": ["shopify-lit/vite/index.ts"],
       "@/*": ["frontend/*"],
       "~/*": ["frontend/*"]
     },
@@ -25,6 +28,6 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": false
   },
-  "include": ["frontend/**/*", "vite.config.ts", "vite-env.d.ts"],
+    "include": ["frontend/**/*", "shopify-lit/**/*", "vite.config.ts", "vite-env.d.ts"],
   "exclude": ["assets", "dist", "node_modules"]
 }

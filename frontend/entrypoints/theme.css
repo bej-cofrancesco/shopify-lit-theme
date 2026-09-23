@@ -12,7 +12,8 @@
 
   /* Transparent hosts — layout lives in inner DSD / Lit markup */
   vulpine-loader,
-  qty-stepper {
+  qty-stepper,
+  product-card {
     display: contents;
   }
 }

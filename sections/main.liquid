@@ -1,20 +1,51 @@
-<section class="space-y-10">
+<section class="space-y-16">
   <header class="space-y-3">
     <h1 class="text-3xl font-semibold tracking-tight">{{ 'dsd.title' | t }}</h1>
     <p class="max-w-2xl text-stone-600">{{ 'dsd.intro' | t }}</p>
   </header>
 
   <div class="space-y-3">
+    <h2 class="text-xl font-medium">{{ 'dsd.product_card_heading' | t }}</h2>
+    <p class="text-sm text-stone-500">{{ 'dsd.product_card_hint' | t }}</p>
+    {% liquid
+      assign product_collection = section.settings.collection
+      if product_collection == blank
+        assign product_collection = collections.all
+      endif
+      assign products_to_show = section.settings.products_to_show | default: 4
+    %}
+    {% if product_collection.products_count > 0 %}
+      <ul class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4" role="list">
+        {% for product in product_collection.products limit: products_to_show %}
+          <li>
+            {% render 'product-card', product: product, on: 'visible' %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm text-stone-500">{{ 'dsd.product_card_empty' | t }}</p>
+    {% endif %}
+  </div>
+
+  <div class="space-y-3">
     <h2 class="text-xl font-medium">{{ 'dsd.interaction_heading' | t }}</h2>
     <p class="text-sm text-stone-500">{{ 'dsd.interaction_hint' | t }}</p>
-    {% capture stepper %}
-      {% render 'qty-stepper-dsd', value: 3, min: 1, max: 9 %}
-    {% endcapture %}
-    {% render 'vulpine-loader',
-      entry: '@components/qty-stepper.ts',
-      on: 'interaction',
-      content: stepper
-    %}
+    {% render 'qty-stepper', value: 3, min: 1, max: 9, on: 'interaction' %}
+  </div>
+
+  <div class="space-y-3">
+    <h2 class="text-xl font-medium">{{ 'dsd.idle_heading' | t }}</h2>
+    <p class="text-sm text-stone-500">{{ 'dsd.idle_hint' | t }}</p>
+    {% render 'qty-stepper', value: 1, min: 1, max: 9, on: 'idle' %}
+  </div>
+
+  <p class="text-sm font-medium text-stone-500">{{ 'dsd.scroll_spacer' | t }}</p>
+  <div class="h-[70vh] rounded-xl border border-dashed border-stone-300 bg-stone-50" aria-hidden="true"></div>
+
+  <div class="space-y-3">
+    <h2 class="text-xl font-medium">{{ 'dsd.visible_heading' | t }}</h2>
+    <p class="text-sm text-stone-500">{{ 'dsd.visible_hint' | t }}</p>
+    {% render 'qty-stepper', value: 5, min: 1, max: 9, on: 'visible' %}
   </div>
 
   <p class="rounded-lg border border-dashed border-stone-300 bg-white p-4 text-sm text-stone-600">
@@ -25,6 +56,22 @@
 {% schema %}
 {
   "name": "t:sections.main.name",
-  "settings": []
+  "settings": [
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "t:sections.main.settings.collection.label",
+      "info": "t:sections.main.settings.collection.info"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 4,
+      "label": "t:sections.main.settings.products_to_show.label"
+    }
+  ]
 }
 {% endschema %}

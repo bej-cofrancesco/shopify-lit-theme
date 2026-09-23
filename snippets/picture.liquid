@@ -1,0 +1,96 @@
+{% doc %}
+  Plain `<picture>` — no JS. Prefer a Shopify `image`; fall back to `src`.
+
+  @param {image} [image] - Shopify image / media preview image
+  @param {string} [src] - Fallback URL when image is blank
+  @param {string} [alt] - Alt text (defaults to image.alt)
+  @param {string} [class] - Classes on the inner `<img>`
+  @param {number} [width] - Fallback img width (default 800)
+  @param {number} [height] - Intrinsic height (optional)
+  @param {string} [loading] - lazy | eager (default lazy)
+  @param {string} [sizes] - sizes attribute (default 100vw)
+  @param {string} [widths] - Comma-separated srcset widths (default 320,480,640,800,1000)
+  @param {string} [media] - Optional media query for an alternate source
+  @param {string} [media_src] - URL for the media-matched source
+  @param {string} [media_srcset] - srcset for the media-matched source
+{% enddoc %}
+{% liquid
+  assign alt = alt | default: ''
+  assign class = class | default: ''
+  assign loading = loading | default: 'lazy'
+  assign sizes = sizes | default: '100vw'
+  assign width = width | default: 800
+  assign widths = widths | default: '320,480,640,800,1000'
+
+  if image != blank
+    if alt == blank
+      assign alt = image.alt | default: ''
+    endif
+    assign src = image | image_url: width: width
+    if height == blank and image.aspect_ratio != blank
+      assign height = width | divided_by: image.aspect_ratio | round
+    endif
+
+    assign srcset = ''
+    assign width_list = widths | split: ','
+    for w in width_list
+      assign w_num = w | plus: 0
+      if image.width == blank or w_num <= image.width
+        assign url = image | image_url: width: w_num
+        if srcset == blank
+          assign srcset = url | append: ' ' | append: w_num | append: 'w'
+        else
+          assign srcset = srcset | append: ', ' | append: url | append: ' ' | append: w_num | append: 'w'
+        endif
+      endif
+    endfor
+  endif
+%}
+{% if src != blank %}
+  <picture>
+    {% if media != blank %}
+      {% if media_srcset != blank or media_src != blank %}
+        <source
+          media="{{ media | escape }}"
+          {% if media_srcset != blank %}
+            srcset="{{ media_srcset | escape }}"
+          {% else %}
+            srcset="{{ media_src | escape }}"
+          {% endif %}
+          {% if sizes != blank %}
+            sizes="{{ sizes | escape }}"
+          {% endif %}
+        >
+      {% endif %}
+    {% endif %}
+    {% if srcset != blank %}
+      <source
+        srcset="{{ srcset | escape }}"
+        {% if sizes != blank %}
+          sizes="{{ sizes | escape }}"
+        {% endif %}
+      >
+    {% endif %}
+    <img
+      src="{{ src | escape }}"
+      alt="{{ alt | escape }}"
+      {% if class != blank %}
+        class="{{ class }}"
+      {% endif %}
+      {% if width != blank %}
+        width="{{ width }}"
+      {% endif %}
+      {% if height != blank %}
+        height="{{ height }}"
+      {% endif %}
+      {% if srcset != blank %}
+        srcset="{{ srcset | escape }}"
+      {% endif %}
+      {% if sizes != blank and srcset != blank %}
+        sizes="{{ sizes | escape }}"
+      {% endif %}
+      loading="{{ loading | escape }}"
+      decoding="async"
+    >
+  </picture>
+{% endif %}

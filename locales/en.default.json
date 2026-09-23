@@ -5,11 +5,18 @@
     }
   },
   "dsd": {
-    "title": "DSD + Lit islands",
-    "intro": "Declarative Shadow DOM paints first. vulpine-loader defers the Lit module. Lit hydrates the same shadow tree 1:1.",
-    "visible_heading": "Island: on visible",
+    "title": "shopify-lit islands",
+    "intro": "Liquid paints first from compiled Lit templates. vulpine-loader defers the module. ShopifyLitElement absorbs the DOM and binds handlers.",
     "interaction_heading": "Island: on interaction (click)",
-    "interaction_hint": "Click the box to load the Lit module and hydrate.",
-    "no_js_note": "With JavaScript disabled you still see the stepper UI from Declarative Shadow DOM (non-interactive)."
+    "interaction_hint": "Click + / −. The module loads, then that same click is replayed.",
+    "visible_heading": "Island: on visible (scroll)",
+    "visible_hint": "Scroll down. The qty stepper loads when it enters the viewport.",
+    "idle_heading": "Island: on idle",
+    "idle_hint": "Loads when the browser is idle (requestIdleCallback), then + / − work.",
+    "product_card_heading": "Product grid (Liquid first)",
+    "product_card_hint": "Real catalog products. Each card is compiled Liquid; Add to cart binds after the island loads.",
+    "product_card_empty": "No products in this collection yet. Add products in Admin, or pick a collection in the section settings.",
+    "scroll_spacer": "Keep scrolling for the visible island ↓",
+    "no_js_note": "With JavaScript disabled you still see styled markup (images included); controls just aren’t interactive."
   }
 }

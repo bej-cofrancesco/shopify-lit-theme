@@ -1,0 +1,74 @@
+{% comment %}
+  AUTO-GENERATED from product-card.ts by shopify-lit
+  Do not edit by hand.
+{% endcomment %}
+{% assign on = on | default: 'visible' %}
+{% if product != blank %}
+{% liquid
+  assign image = product.featured_image
+  assign image_alt = image.alt | default: product.title
+  assign image_url = ''
+  if image != blank
+    assign image_url = image | image_url: width: 800
+  endif
+%}
+{% capture props %}
+  {
+    "url": {{ product.url | json }},
+    "title": {{ product.title | json }},
+    "vendor": {{ product.vendor | default: '' | json }},
+    "price": {{ product.price | money | json }},
+    "image_url": {{ image_url | json }},
+    "image_alt": {{ image_alt | json }}
+  }
+{% endcapture %}
+{% capture html %}
+<product-card data-lit-ssr props="{{ props | escape }}">
+<article
+        class="group flex w-full flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm"
+      >
+        <a
+          class="relative block aspect-[4/5] overflow-hidden bg-stone-100"
+          href="{{ product.url }}"
+        >
+          {% if image_url %}<img
+                  class="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                  src="{{ image_url }}"
+                  alt="{{ image_alt }}"
+                  width="800"
+                  height="1000"
+                  loading="lazy"
+                  decoding="async"
+                />{% endif %}
+        </a>
+
+        <div class="flex flex-1 flex-col gap-2 p-4">
+          <p class="text-xs font-medium tracking-wide text-stone-400 uppercase">
+            {{ product.vendor }}
+          </p>
+          <h3 class="text-base font-semibold text-stone-900">
+            <a class="hover:underline" href="{{ product.url }}">{{ product.title }}</a>
+          </h3>
+          <p class="text-sm text-stone-600">
+            {{ product.price | money }}
+          </p>
+          <button
+            type="button"
+            class="mt-auto inline-flex items-center justify-center rounded-lg bg-stone-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-stone-800 disabled:bg-stone-400"
+            
+            aria-label="Add to cart"
+            data-lit-on-click="onAdd"
+          >
+            Add to cart
+          </button>
+        </div>
+      </article>
+</product-card>
+{% endcapture %}
+{% render 'vulpine-loader',
+  entry: '@components/product-card.ts',
+  on: on,
+  replay: replay,
+  html: html
+%}
+{% endif %}

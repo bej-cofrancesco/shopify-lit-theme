@@ -4,7 +4,16 @@
       "name": "Header"
     },
     "main": {
-      "name": "DSD demo"
+      "name": "DSD demo",
+      "settings": {
+        "collection": {
+          "label": "Collection",
+          "info": "Defaults to All products when empty."
+        },
+        "products_to_show": {
+          "label": "Products to show"
+        }
+      }
     },
     "page": {
       "name": "Page"
