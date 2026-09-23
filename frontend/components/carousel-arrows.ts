@@ -6,10 +6,6 @@ import {
   nest,
   ShopifyLitElement,
   shopifyComponent,
-  createRef,
-  ref,
-  type Ref,
-  type TemplateResult,
 } from 'shopify-lit';
 import './product-card';
 
@@ -27,6 +23,9 @@ export interface CarouselArrowsProps {
 /**
  * Horizontal scroller. Lit owns markup; `@click` binds like qty-stepper.
  * Track: `props.html` (any slides) and/or `props.products`.
+ *
+ * DOM nodes are resolved via `data-carousel-*` (not lit `ref`) so absorb /
+ * liquidHTML nesting still finds the track after SSR.
  */
 @shopifyComponent({
   tag: 'carousel-arrows',
@@ -40,13 +39,13 @@ export interface CarouselArrowsProps {
   snippet: 'carousel-arrows',
 })
 export class CarouselArrows extends ShopifyLitElement<CarouselArrowsProps> {
-  private trackRef: Ref<HTMLElement> = createRef();
-  private arrowsRef: Ref<HTMLDivElement> = createRef();
-  private prevRef: Ref<HTMLButtonElement> = createRef();
-  private nextRef: Ref<HTMLButtonElement> = createRef();
-
+  #track: HTMLElement | null = null;
+  #arrows: HTMLElement | null = null;
+  #prev: HTMLButtonElement | null = null;
+  #next: HTMLButtonElement | null = null;
   #resize?: ResizeObserver;
   #frame = 0;
+  #listening = false;
 
   get #loop(): boolean {
     return Boolean(this.props.loop);
@@ -54,17 +53,55 @@ export class CarouselArrows extends ShopifyLitElement<CarouselArrowsProps> {
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.trackRef.value?.removeEventListener('scroll', this.#queueUpdate);
-    this.#resize?.disconnect();
-    if (this.#frame) cancelAnimationFrame(this.#frame);
+    this.#teardown();
   }
 
   protected firstUpdated(): void {
-    const track = this.trackRef.value;
-    if (!track) return;
-    track.addEventListener('scroll', this.#queueUpdate, { passive: true });
-    this.#resize = new ResizeObserver(this.#queueUpdate);
-    this.#resize.observe(track);
+    this.#ensureDom();
+  }
+
+  protected updated(): void {
+    this.#ensureDom();
+  }
+
+  #teardown(): void {
+    this.#track?.removeEventListener('scroll', this.#queueUpdate);
+    this.#resize?.disconnect();
+    this.#resize = undefined;
+    this.#listening = false;
+    if (this.#frame) cancelAnimationFrame(this.#frame);
+    this.#frame = 0;
+    this.#track = null;
+    this.#arrows = null;
+    this.#prev = null;
+    this.#next = null;
+  }
+
+  #ensureDom(): void {
+    const track = this.querySelector<HTMLElement>('[data-carousel-track]');
+    const arrows = this.querySelector<HTMLElement>('[data-carousel-arrows]');
+    const prev = this.querySelector<HTMLButtonElement>('[data-carousel-prev]');
+    const next = this.querySelector<HTMLButtonElement>('[data-carousel-next]');
+
+    if (track !== this.#track) {
+      this.#track?.removeEventListener('scroll', this.#queueUpdate);
+      this.#resize?.disconnect();
+      this.#resize = undefined;
+      this.#listening = false;
+      this.#track = track;
+    }
+
+    this.#arrows = arrows;
+    this.#prev = prev;
+    this.#next = next;
+
+    if (this.#track && !this.#listening) {
+      this.#track.addEventListener('scroll', this.#queueUpdate, { passive: true });
+      this.#resize = new ResizeObserver(this.#queueUpdate);
+      this.#resize.observe(this.#track);
+      this.#listening = true;
+    }
+
     this.#sync();
   }
 
@@ -77,7 +114,7 @@ export class CarouselArrows extends ShopifyLitElement<CarouselArrowsProps> {
   };
 
   #step(): number {
-    const track = this.trackRef.value;
+    const track = this.#track;
     if (!track) return 0;
     const item = track.firstElementChild as HTMLElement | null;
     if (!item) return track.clientWidth;
@@ -89,7 +126,8 @@ export class CarouselArrows extends ShopifyLitElement<CarouselArrowsProps> {
   }
 
   #scrollPage(direction: 1 | -1): void {
-    const track = this.trackRef.value;
+    this.#ensureDom();
+    const track = this.#track;
     if (!track) return;
     const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
     const atStart = track.scrollLeft <= EDGE_TOLERANCE;
@@ -118,27 +156,27 @@ export class CarouselArrows extends ShopifyLitElement<CarouselArrowsProps> {
   };
 
   #sync(): void {
-    const track = this.trackRef.value;
+    const track = this.#track;
     if (!track) return;
     const maxScroll = track.scrollWidth - track.clientWidth;
     const canScroll = maxScroll > EDGE_TOLERANCE;
     const atStart = track.scrollLeft <= EDGE_TOLERANCE;
     const atEnd = track.scrollLeft >= maxScroll - EDGE_TOLERANCE;
 
-    this.arrowsRef.value?.classList.toggle('!hidden', !canScroll);
-    this.arrowsRef.value?.classList.toggle('flex', canScroll);
+    this.#arrows?.classList.toggle('!hidden', !canScroll);
+    this.#arrows?.classList.toggle('flex', canScroll);
 
     if (this.#loop) {
-      if (this.prevRef.value) this.prevRef.value.disabled = !canScroll;
-      if (this.nextRef.value) this.nextRef.value.disabled = !canScroll;
+      if (this.#prev) this.#prev.disabled = !canScroll;
+      if (this.#next) this.#next.disabled = !canScroll;
       return;
     }
 
-    if (this.prevRef.value) this.prevRef.value.disabled = atStart;
-    if (this.nextRef.value) this.nextRef.value.disabled = atEnd;
+    if (this.#prev) this.#prev.disabled = atStart;
+    if (this.#next) this.#next.disabled = atEnd;
   }
 
-  render(): TemplateResult {
+  render() {
     return html`
       <div class="block">
         <div class="mb-2 flex items-center justify-between gap-4">
@@ -151,9 +189,12 @@ export class CarouselArrows extends ShopifyLitElement<CarouselArrowsProps> {
                 </h3>`
               : nothing
           }
-          <div ${ref(this.arrowsRef)} class="hidden items-center gap-2 md:flex">
+          <div
+            data-carousel-arrows
+            class="hidden items-center gap-2 md:flex"
+          >
             <button
-              ${ref(this.prevRef)}
+              data-carousel-prev
               type="button"
               aria-label="Previous"
               class="flex h-[2em] w-[2em] items-center justify-center opacity-70 transition-opacity hover:opacity-100 disabled:opacity-30"
@@ -177,7 +218,7 @@ export class CarouselArrows extends ShopifyLitElement<CarouselArrowsProps> {
               </span>
             </button>
             <button
-              ${ref(this.nextRef)}
+              data-carousel-next
               type="button"
               aria-label="Next"
               class="flex h-[2em] w-[2em] items-center justify-center opacity-70 transition-opacity hover:opacity-100 disabled:opacity-30"
@@ -203,7 +244,7 @@ export class CarouselArrows extends ShopifyLitElement<CarouselArrowsProps> {
           </div>
         </div>
         <ul
-          ${ref(this.trackRef)}
+          data-carousel-track
           class="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 scroll-pl-4 md:mx-0 md:px-0 md:scroll-pl-0"
         >
           ${

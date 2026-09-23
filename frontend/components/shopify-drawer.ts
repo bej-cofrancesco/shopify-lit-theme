@@ -213,7 +213,7 @@ export class ShopifyDrawer<
         this.#overlay
           ? html`
               <div
-                class="fixed inset-0 bg-black/40 transition-opacity ${this.#zIndex} ${
+                class="fixed inset-0 bg-black/40 transition-opacity z-40 ${
                   this._open ? 'opacity-100' : 'pointer-events-none opacity-0'
                 }"
                 @click=${this.onDismiss}

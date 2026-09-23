@@ -81,11 +81,12 @@ export class SearchDrawer extends ShopifyDrawer<SearchDrawerProps> {
   private recentSearches: string[] = [];
 
   private activeQuery = '';
+  private pendingQuery = '';
   private cache = new Map<string, string>();
   private controller?: AbortController;
 
-  private _debouncedRequest = debounce(() => {
-    this._requestResults(this.inputRef.value?.value ?? '');
+  private _debouncedRequest = debounce((raw: string) => {
+    this._requestResults(raw);
   }, DEBOUNCE_MS);
 
   protected firstUpdated(): void {
@@ -178,10 +179,12 @@ export class SearchDrawer extends ShopifyDrawer<SearchDrawerProps> {
     try {
       const response = await fetch(this._endpoint(query), {
         signal: controller.signal,
+        credentials: 'same-origin',
+        headers: { Accept: 'text/html' },
       });
       if (!response.ok) return;
 
-      const markup = await response.text();
+      const markup = this._extractPredictiveMarkup(await response.text());
       this._remember(key, markup);
       if (this.activeQuery !== query) return;
       this.resultsHtml = markup;
@@ -192,9 +195,23 @@ export class SearchDrawer extends ShopifyDrawer<SearchDrawerProps> {
     }
   }
 
+  /** Section Rendering wraps markup in `#shopify-section-*`; unwrap when present. */
+  private _extractPredictiveMarkup(html: string): string {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const section =
+      doc.querySelector('[data-predictive-search]') ??
+      doc.querySelector('[id^="shopify-section-"]') ??
+      doc.body;
+    return section?.innerHTML?.trim() ? section.outerHTML : html;
+  }
+
   onInput = (event: Event): void => {
-    this.term = (event.target as HTMLInputElement).value;
-    this._debouncedRequest();
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    const value = target.value;
+    this.term = value;
+    this.pendingQuery = value;
+    this._debouncedRequest(value);
   };
 
   onSubmit = (): void => {
@@ -205,6 +222,7 @@ export class SearchDrawer extends ShopifyDrawer<SearchDrawerProps> {
   onClearInput = (): void => {
     this._abort();
     this.activeQuery = '';
+    this.pendingQuery = '';
     this.resultsHtml = '';
     this.term = '';
     const input = this.inputRef.value;
@@ -255,6 +273,7 @@ export class SearchDrawer extends ShopifyDrawer<SearchDrawerProps> {
       input.focus({ preventScroll: true });
     }
     this.term = term;
+    this.pendingQuery = term;
     this._requestResults(term);
   }
 
@@ -390,7 +409,7 @@ export class SearchDrawer extends ShopifyDrawer<SearchDrawerProps> {
           ${
             this._open
               ? html`<div
-                  class="fixed inset-0 z-50 bg-black/40 transition-opacity opacity-100"
+                  class="fixed inset-0 z-40 bg-black/40 transition-opacity opacity-100"
                   @click=${this.onDismiss}
                   aria-hidden="true"
                 ></div>`
@@ -416,6 +435,7 @@ export class SearchDrawer extends ShopifyDrawer<SearchDrawerProps> {
                   action=${this.props.searchUrl}
                   class="flex grow items-center gap-2.5 border border-gray-200 bg-gray-50 px-3 py-2.5 transition-colors focus-within:border-gray-400 focus-within:bg-white md:px-4"
                   @submit=${this.onSubmit}
+                  @input=${this.onInput}
                 >
                   <button
                     type="submit"
@@ -452,7 +472,6 @@ export class SearchDrawer extends ShopifyDrawer<SearchDrawerProps> {
                     autocapitalize="off"
                     spellcheck="false"
                     enterkeyhint="search"
-                    @input=${this.onInput}
                   />
                   ${
                     this.term

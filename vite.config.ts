@@ -81,6 +81,13 @@ const litDevAliases = [
 
 export default defineConfig(({ command }) => ({
   publicDir: 'public',
+  server: {
+    // Cloudflare quick tunnels dial 127.0.0.1. `host: 'localhost'` can bind
+    // IPv6-only (::1) on macOS, so the tunnel URL comes up but assets 404.
+    host: '127.0.0.1',
+    port: 5173,
+    strictPort: true,
+  },
   resolve: {
     alias: [
       ...litDevAliases,

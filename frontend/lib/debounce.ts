@@ -1,9 +1,9 @@
-export function debounce<T extends (...args: never[]) => void>(
-  fn: T,
+export function debounce<Args extends unknown[]>(
+  fn: (...args: Args) => void,
   wait: number,
-): (...args: Parameters<T>) => void {
+): (...args: Args) => void {
   let timer = 0;
-  return (...args: Parameters<T>) => {
+  return (...args: Args) => {
     window.clearTimeout(timer);
     timer = window.setTimeout(() => fn(...args), wait);
   };

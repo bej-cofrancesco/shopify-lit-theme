@@ -20,9 +20,12 @@
                 >
                   {{ title }}
                 </h3>{% endif %}
-          <div  class="hidden items-center gap-2 md:flex">
+          <div
+            data-carousel-arrows
+            class="hidden items-center gap-2 md:flex"
+          >
             <button
-              
+              data-carousel-prev
               type="button"
               aria-label="Previous"
               class="flex h-[2em] w-[2em] items-center justify-center opacity-70 transition-opacity hover:opacity-100 disabled:opacity-30"
@@ -46,7 +49,7 @@
               </span>
             </button>
             <button
-              
+              data-carousel-next
               type="button"
               aria-label="Next"
               class="flex h-[2em] w-[2em] items-center justify-center opacity-70 transition-opacity hover:opacity-100 disabled:opacity-30"
@@ -72,7 +75,7 @@
           </div>
         </div>
         <ul
-          
+          data-carousel-track
           class="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 scroll-pl-4 md:mx-0 md:px-0 md:scroll-pl-0"
         >
           {% if html %}{{ html }}{% else %}{% for product in products %}
@@ -95,9 +98,12 @@
                 >
                   {{ title }}
                 </h3>{% endif %}
-          <div  class="hidden items-center gap-2 md:flex">
+          <div
+            data-carousel-arrows
+            class="hidden items-center gap-2 md:flex"
+          >
             <button
-              
+              data-carousel-prev
               type="button"
               aria-label="Previous"
               class="flex h-[2em] w-[2em] items-center justify-center opacity-70 transition-opacity hover:opacity-100 disabled:opacity-30"
@@ -121,7 +127,7 @@
               </span>
             </button>
             <button
-              
+              data-carousel-next
               type="button"
               aria-label="Next"
               class="flex h-[2em] w-[2em] items-center justify-center opacity-70 transition-opacity hover:opacity-100 disabled:opacity-30"
@@ -147,7 +153,7 @@
           </div>
         </div>
         <ul
-          
+          data-carousel-track
           class="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 scroll-pl-4 md:mx-0 md:px-0 md:scroll-pl-0"
         >
           {% if html %}{{ html }}{% else %}{% for product in products %}
