@@ -1,16 +1,22 @@
-<section class="container mx-auto space-y-4 px-4 py-12">
-  <h1 class="text-3xl font-semibold tracking-tight">{{ shop.name }}</h1>
-  <p class="max-w-xl text-stone-600">
-    Empty starter — add Lit islands under
-    <code class="text-sm">src/frontend/components</code>
-    and wrap them with
-    <code class="text-sm">{% render 'vulpine-loader' %}</code>.
-  </p>
-</section>
-
 {% schema %}
 {
   "name": "t:sections.main.name",
-  "settings": []
+  "settings": [
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "t:sections.main.settings.collection.label",
+      "info": "t:sections.main.settings.collection.info"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 4,
+      "label": "t:sections.main.settings.products_to_show.label"
+    }
+  ]
 }
 {% endschema %}

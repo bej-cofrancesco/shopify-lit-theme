@@ -1,13 +1,24 @@
-<header class="border-b border-stone-200 bg-white">
-  <div class="container mx-auto flex items-center justify-between gap-4 px-4 py-4">
-    <a href="{{ routes.root_url }}" class="text-lg font-semibold tracking-tight">
-      {{ shop.name }}
-    </a>
-    <nav class="flex items-center gap-4 text-sm" aria-label="Primary">
-      <a class="hover:underline" href="{{ routes.root_url }}">Home</a>
-      <a class="hover:underline" href="{{ routes.cart_url }}">Cart</a>
-    </nav>
-  </div>
+<header class="w-full border-b border-black bg-white">
+  <nav class="container mx-auto flex items-center justify-between px-4 py-4">
+    <h1 class="text-gray-500">{{ shop.name }}</h1>
+    {% capture menu_button_content %}
+      <div class="flex size-full items-center gap-2">
+      <span class="sr-only text-gray-500">Open Menu</span>
+      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+      </div>
+    {% endcapture %}
+
+    {% render 'event_trigger',
+      label: 'Menu',
+      event: 'menu_drawer:open',
+      content: menu_button_content,
+      type: 'button',
+      aria_label: 'Menu Drawer Open',
+      on: 'click, idle'
+    %}
+  </nav>
 </header>
 
 {% schema %}

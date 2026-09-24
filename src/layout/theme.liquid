@@ -38,11 +38,13 @@
   </head>
 
   <body class="min-h-full bg-stone-50 text-stone-900 antialiased">
-    <a class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4" href="#MainContent">
+    <a
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4"
+      href="#MainContent"
+    >
       {{ 'general.accessibility.skip_to_content' | t }}
     </a>
-
-    {% section 'header' %}
+    {% sections 'header_group' %}
 
     <main id="MainContent" class="container mx-auto space-y-8 px-4 py-8">
       {{ content_for_layout }}

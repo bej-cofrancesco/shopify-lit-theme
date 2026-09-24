@@ -101,7 +101,7 @@ export class ShopifyLitElement<
     super.update(changedProperties);
   }
 
-  render(): TemplateResult | typeof nothing {
+  protected render(): TemplateResult | typeof nothing {
     return nothing;
   }
 }

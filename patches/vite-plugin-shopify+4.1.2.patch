@@ -1,5 +1,5 @@
---- a/node_modules/vite-plugin-shopify/dist/index.js
-+++ b/node_modules/vite-plugin-shopify/dist/index.js
+--- a/node_modules/vite-plugin-shopify/dist/index.js	1985-10-26 18:15:00
++++ b/node_modules/vite-plugin-shopify/dist/index.js	2026-09-24 09:26:52
 @@ -35,6 +35,7 @@
  import glob from "fast-glob";
  import createDebugger from "debug";
@@ -97,7 +97,59 @@
      }
    };
  }
-@@ -233,9 +293,18 @@
+@@ -181,21 +241,36 @@
+                 isTTY() && renderInfo({ body: `${viteDevServerUrl} is tunneled to ${tunnelUrl}` });
+                 return;
+               }
+-              const hook = await startTunnel({
+-                config: null,
+-                provider: "cloudflare",
+-                port: address.port
+-              });
+-              tunnelClient = hook.valueOrAbort();
+-              tunnelUrl = await pollTunnelUrl(tunnelClient);
+-              isTTY() && renderInfo({ body: `${viteDevServerUrl} is tunneled to ${tunnelUrl}` });
+-              const viteTagSnippetContent2 = viteTagSnippetPrefix(config2) + viteTagSnippetDev(
+-                tunnelUrl,
+-                options.entrypointsDir,
+-                reactPlugin,
+-                options.themeHotReload
+-              );
+-              fs.writeFileSync(viteTagSnippetPath, viteTagSnippetContent2);
++              try {
++                const hook = await startTunnel({
++                  config: null,
++                  provider: "cloudflare",
++                  port: address.port
++                });
++                tunnelClient = hook.valueOrAbort();
++                tunnelUrl = await pollTunnelUrl(tunnelClient);
++                isTTY() && renderInfo({ body: `${viteDevServerUrl} is tunneled to ${tunnelUrl}` });
++                const viteTagSnippetContent2 = viteTagSnippetPrefix(config2) + viteTagSnippetDev(
++                  tunnelUrl,
++                  options.entrypointsDir,
++                  reactPlugin,
++                  options.themeHotReload
++                );
++                fs.writeFileSync(viteTagSnippetPath, viteTagSnippetContent2);
++              } catch (err) {
++                const message = err instanceof Error ? err.message : String(err);
++                console.warn(
++                  `[vite-plugin-shopify] Cloudflare tunnel failed (${message}). Falling back to ${viteDevServerUrl}.`
++                );
++                tunnelUrl = undefined;
++                const viteTagSnippetContent2 = viteTagSnippetPrefix(config2) + viteTagSnippetDev(
++                  viteDevServerUrl,
++                  options.entrypointsDir,
++                  reactPlugin,
++                  options.themeHotReload
++                );
++                fs.writeFileSync(viteTagSnippetPath, viteTagSnippetContent2);
++              }
+             })();
+           }, 100);
+           const viteTagSnippetContent = viteTagSnippetPrefix(config2) + viteTagSnippetDev(
+@@ -233,9 +308,18 @@
          return;
        }
        const assetTags = [];
