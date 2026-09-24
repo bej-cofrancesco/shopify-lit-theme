@@ -91,20 +91,6 @@ export default defineConfig(({ command }) => ({
     port: 5173,
     strictPort: true,
   },
-  build: {
-    rollupOptions: {
-      // Zod 4.6.x documents @__PURE__ in block comments; Rollup warns and strips them.
-      onwarn(warning, defaultHandler) {
-        if (
-          warning.message.includes('zod') &&
-          warning.message.includes('@__PURE__')
-        ) {
-          return;
-        }
-        defaultHandler(warning);
-      },
-    },
-  },
   resolve: {
     alias: [
       ...litDevAliases,

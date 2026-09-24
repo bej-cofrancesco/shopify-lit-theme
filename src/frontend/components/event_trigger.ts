@@ -2,10 +2,9 @@ import { ShopifyLitElement, html, shopifyComponent, liquidHTML } from 'shopify-l
 import type { TemplateResult } from 'shopify-lit';
 import {
   dispatch,
-  type EventDetailInputMap,
+  type EventDetailMap,
   type EventType,
 } from '@frontend/lib/event_handler';
-import { InvalidEventError } from '@frontend/lib/error';
 
 export type EventTriggerProps = {
   label: string;
@@ -13,8 +12,7 @@ export type EventTriggerProps = {
   type: string;
   aria_label: string;
   event: EventType;
-  /** Liquid passes JSON as a string; {@link dispatch} coerces via the registry. */
-  detail?: EventDetailInputMap[EventType];
+  detail?: EventDetailMap[EventType];
 };
 
 @shopifyComponent({
@@ -32,11 +30,7 @@ export type EventTriggerProps = {
 export class EventTrigger extends ShopifyLitElement<EventTriggerProps> {
   private _handleClick = () => {
     const { event, detail } = this.props;
-
-    if (!event) {
-      throw new InvalidEventError(event);
-    }
-
+    if (!event) return;
     dispatch(event, detail);
   };
 
