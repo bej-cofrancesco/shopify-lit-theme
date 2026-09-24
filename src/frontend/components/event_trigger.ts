@@ -1,6 +1,10 @@
 import { ShopifyLitElement, html, shopifyComponent, liquidHTML } from 'shopify-lit';
 import type { TemplateResult } from 'shopify-lit';
-import { dispatch, type EventDetailMap, type EventType } from '@frontend/lib/event_handler';
+import {
+  dispatch,
+  type EventDetailInputMap,
+  type EventType,
+} from '@frontend/lib/event_handler';
 import { InvalidEventError } from '@frontend/lib/error';
 
 export type EventTriggerProps = {
@@ -9,7 +13,8 @@ export type EventTriggerProps = {
   type: string;
   aria_label: string;
   event: EventType;
-  detail?: EventDetailMap[EventType];
+  /** Liquid passes JSON as a string; {@link dispatch} coerces via the registry. */
+  detail?: EventDetailInputMap[EventType];
 };
 
 @shopifyComponent({
